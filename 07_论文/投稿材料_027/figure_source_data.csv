@@ -1,0 +1,21 @@
+figure,panel,dataset_or_condition,metric,value,ci_low,ci_high,n,notes
+Fig1_cross_dataset_effects,AUROC,MVTec AD,delta,0.0783,0.0525,0.1029,45,local minus matched random
+Fig1_cross_dataset_effects,AUROC,MPDD,delta,0.1013,0.0593,0.1448,18,local minus matched random
+Fig1_cross_dataset_effects,AUROC,VisA,delta,0.0124,0.0079,0.0166,36,local minus matched random
+Fig1_cross_dataset_effects,Recall@5%FPR,MVTec AD,delta,0.1848,0.1192,0.2491,45,local minus matched random
+Fig1_cross_dataset_effects,Recall@5%FPR,MPDD,delta,0.2074,0.1208,0.3001,18,local minus matched random
+Fig1_cross_dataset_effects,Recall@5%FPR,VisA,delta,0.2283,0.1483,0.3056,36,local minus matched random
+Fig2_budget_latency_boundary,Budget sensitivity,10%,AUROC delta,0.0511,,,45,MVTec strict matched random
+Fig2_budget_latency_boundary,Budget sensitivity,25%,AUROC delta,0.0783,,,45,MVTec strict matched random
+Fig2_budget_latency_boundary,Budget sensitivity,50%,AUROC delta,0.1122,,,45,MVTec strict matched random
+Fig2_budget_latency_boundary,Latency,P95 local probe,ms,3.127,,,1,warm-up excluded
+Fig2_budget_latency_boundary,Latency,P95 full probe,ms,4.714,,,1,warm-up excluded
+Fig2_budget_latency_boundary,Latency,P95 sequential mixed path,ms,7.135,,,1,diagnostic boundary
+Fig3_online_sensitivity,Online prefix,MVTec AUROC,delta,0.0331,0.0045,0.0601,45,realized fallback 25.34%
+Fig3_online_sensitivity,Online prefix,MVTec Recall@5%FPR,delta,0.0804,0.0211,0.1346,45,realized fallback 25.34%
+Fig3_online_sensitivity,Online prefix,MPDD seed17 AUROC,delta,0.0890,,,1,configuration sensitivity
+Fig3_online_sensitivity,Online prefix,MPDD seed17 Recall@5%FPR,delta,0.0643,,,1,configuration sensitivity
+Fig3_online_sensitivity,Online prefix,VisA seed17 AUROC,delta,0.00004,,,1,configuration sensitivity
+Fig3_online_sensitivity,Online prefix,VisA seed17 Recall@5%FPR,delta,-0.0408,,,1,configuration sensitivity
+Fig3_online_sensitivity,Online prefix,VisA buffer128 AUROC,delta,0.00124,-0.00113,0.00339,36,configuration sensitivity
+Fig3_online_sensitivity,Online prefix,VisA buffer128 Recall@5%FPR,delta,0.0750,0.0189,0.1317,36,configuration sensitivity

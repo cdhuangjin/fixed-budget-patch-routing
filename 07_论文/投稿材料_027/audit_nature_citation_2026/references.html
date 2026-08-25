@@ -1,0 +1,846 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nature Citation Browser</title>
+  <style>
+    :root {
+      --ink: #1f1f1f;
+      --muted: #5f6368;
+      --paper: #f8f9fa;
+      --panel: #ffffff;
+      --line: #dadce0;
+      --accent: #1a73e8;
+      --accent-2: #d93025;
+      --soft: #e8f0fe;
+      --soft-2: #f1f3f4;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.45;
+    }
+    header {
+      padding: 26px clamp(16px, 4vw, 40px) 16px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 3vw, 42px);
+      font-weight: 500;
+      letter-spacing: 0;
+    }
+    .subhead {
+      max-width: 980px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+    .toolbar {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: start;
+      padding: 16px clamp(16px, 4vw, 40px);
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+      position: sticky;
+      top: 0;
+      z-index: 8;
+    }
+    .toolbar a, .toolbar button, .toolbar input, .toolbar select {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      border-radius: 20px;
+      padding: 10px 14px;
+      font: 500 14px Arial, Helvetica, sans-serif;
+      text-decoration: none;
+    }
+    .toolbar button, .toolbar a {
+      cursor: pointer;
+    }
+    .toolbar button.primary, .toolbar a.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+    .filters {
+      display: grid;
+      gap: 10px;
+    }
+    .filter-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .search-input {
+      width: 100%;
+    }
+    .summary-strip {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+    }
+    .pill {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 9px 12px;
+      background: var(--soft-2);
+      font-size: 13px;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 18px;
+      padding: 22px clamp(16px, 4vw, 40px) 48px;
+    }
+    main {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+    aside {
+      position: sticky;
+      top: 124px;
+      align-self: start;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(60, 64, 67, 0.12);
+    }
+    .segment-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 18px 20px;
+      box-shadow: 0 1px 4px rgba(60, 64, 67, 0.12);
+    }
+    .segment-head {
+      display: flex;
+      gap: 12px;
+      align-items: start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .segment-id {
+      background: var(--soft);
+      color: var(--accent);
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .query {
+      color: var(--muted);
+      font-size: 12px;
+      max-width: 780px;
+    }
+    .segment-text {
+      margin: 0 0 14px;
+      font-size: 18px;
+    }
+    .insert-row {
+      display: grid;
+      gap: 6px;
+      margin: 12px 0 16px;
+      padding: 12px;
+      background: var(--soft);
+      border-radius: 10px;
+    }
+    .insert-row span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    code {
+      white-space: normal;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 14px;
+    }
+    .references-grid {
+      display: grid;
+      gap: 12px;
+    }
+    .reference {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px 16px;
+      background: #fff;
+    }
+    .ref-topline {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+    .marker {
+      color: var(--accent);
+      font-weight: 800;
+    }
+    .grade {
+      color: var(--accent-2);
+      font-weight: 800;
+    }
+    .ref-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .check-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    h3 {
+      margin: 0 0 8px;
+      font-size: 19px;
+      line-height: 1.35;
+      font-weight: 500;
+    }
+    .meta, .authors, .empty {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .reference a {
+      color: var(--accent);
+      overflow-wrap: anywhere;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .abstract {
+      margin: 8px 0 0;
+      color: #3c4043;
+      font-size: 14px;
+    }
+    .hidden {
+      display: none !important;
+    }
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      background: rgba(20, 33, 31, 0.42);
+      backdrop-filter: blur(3px);
+      z-index: 20;
+    }
+    .modal-overlay.is-hidden {
+      display: none;
+    }
+    .modal-panel {
+      border: 1px solid var(--ink);
+      border-radius: 8px;
+      width: min(680px, calc(100vw - 28px));
+      box-shadow: 0 16px 40px rgba(60, 64, 67, 0.28);
+      background: var(--panel);
+      color: var(--ink);
+    }
+    .modal-inner {
+      padding: 24px;
+    }
+    .modal-inner h2 {
+      margin: 0 0 10px;
+      font-size: 28px;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin: 18px 0;
+    }
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px;
+      background: var(--soft-2);
+    }
+    .stat b {
+      display: block;
+      font-size: 30px;
+      line-height: 1;
+    }
+    .modal-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .modal-actions a, .modal-actions button {
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #fffdf8;
+      border-radius: 20px;
+      padding: 10px 12px;
+      font: 700 14px Arial, Helvetica, sans-serif;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .modal-actions button {
+      background: var(--panel);
+      color: var(--accent);
+    }
+    .selection-title {
+      margin: 0 0 10px;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .selection-meta {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .selection-list {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 14px;
+      max-height: 48vh;
+      overflow: auto;
+    }
+    .selection-item {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      background: var(--soft-2);
+    }
+    .selection-item h4 {
+      margin: 0 0 6px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .selection-item p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .empty-state {
+      color: var(--muted);
+      font-size: 14px;
+      padding: 12px;
+      border: 1px dashed var(--line);
+      border-radius: 10px;
+      background: var(--soft-2);
+    }
+    @media (max-width: 680px) {
+      .stats { grid-template-columns: 1fr; }
+      .segment-head { align-items: flex-start; }
+    }
+    @media (max-width: 1040px) {
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+      .summary-strip {
+        justify-content: flex-start;
+      }
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      aside {
+        position: static;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Nature Citation Browser</h1>
+    <p class="subhead">Scholar-style browsing for strict Nature/CNS-family candidates. Filter by year, compare related hits, choose the references you actually want, then download them as RIS, ENW, or Zotero RDF.</p>
+  </header>
+  <nav class="toolbar">
+    <div class="filters">
+      <input id="queryFilter" class="search-input" type="text" placeholder="Filter by title, journal, DOI, author, or segment text">
+      <div class="filter-group">
+        <label for="yearFrom">From year</label>
+        <input id="yearFrom" type="number" min="1900" max="2100" placeholder="2019">
+        <label for="yearTo">To year</label>
+        <input id="yearTo" type="number" min="1900" max="2100" placeholder="2026">
+        <button id="applyFilters" type="button">Apply filters</button>
+        <button id="clearFilters" type="button">Clear</button>
+      </div>
+      <div class="filter-group">
+        <label class="check-row"><input id="selectedOnly" type="checkbox"> Show selected only</label>
+      </div>
+    </div>
+    <div class="summary-strip">
+      <span class="pill"><strong id="visibleCount">0</strong> visible</span>
+      <span class="pill"><strong id="selectedCount">0</strong> selected</span>
+      <span class="pill"><strong>5</strong> segments</span>
+    </div>
+    <div class="summary-strip">
+      <button id="openSummary" type="button">Guide</button>
+      <label for="downloadFormat">Format</label>
+      <select id="downloadFormat">
+        <option value="ris">RIS</option>
+        <option value="enw">ENW</option>
+        <option value="zotero-rdf">Zotero RDF</option>
+      </select>
+      <a class="primary" id="downloadSelected" href="references.ris" download="references.ris">Download selected / all</a>
+    </div>
+  </nav>
+  <div class="layout">
+    <main id="results">
+      
+            <section class="segment-card" id="S001">
+              <div class="segment-head">
+                <span class="segment-id">S001 · Sentence 1</span>
+                <span class="query">Query: Industrial visual anomaly detection must operate with scarce defect labels and strict false-positive and latency constraints</span>
+              </div>
+              <p class="segment-text">Industrial visual anomaly detection must operate with scarce defect labels and strict false-positive and latency constraints.</p>
+              <div class="insert-row">
+                <span>Suggested insert</span>
+                <code>(Park et al., 2024)</code>
+              </div>
+              <div class="references-grid">
+                
+                    <article
+                      class="reference"
+                      data-key="10.1038/s41598-024-69698-5"
+                      data-title="Visual defect obfuscation based self-supervised anomaly detection"
+                      data-journal="Scientific Reports"
+                      data-doi="10.1038/s41598-024-69698-5"
+                      data-year="2024"
+                      data-authors="Park, YeongHyeon; Kang, Sungho; Kim, Myung Jin; Lee, Yeonho; Kim, Hyeong Seok; Yi, Juneho"
+                      data-segment="Industrial visual anomaly detection must operate with scarce defect labels and strict false-positive and latency constraints."
+                      data-record="{&quot;title&quot;: &quot;Visual defect obfuscation based self-supervised anomaly detection&quot;, &quot;journal&quot;: &quot;Scientific Reports&quot;, &quot;family&quot;: &quot;Nature Portfolio&quot;, &quot;year&quot;: &quot;2024&quot;, &quot;doi&quot;: &quot;10.1038/s41598-024-69698-5&quot;, &quot;pmid&quot;: &quot;&quot;, &quot;url&quot;: &quot;https://doi.org/10.1038/s41598-024-69698-5&quot;, &quot;doi_url&quot;: &quot;https://doi.org/10.1038/s41598-024-69698-5&quot;, &quot;volume&quot;: &quot;14&quot;, &quot;issue&quot;: &quot;1&quot;, &quot;start_page&quot;: &quot;18872&quot;, &quot;end_page&quot;: &quot;&quot;, &quot;issn&quot;: &quot;2045-2322&quot;, &quot;authors&quot;: [&quot;Park, YeongHyeon&quot;, &quot;Kang, Sungho&quot;, &quot;Kim, Myung Jin&quot;, &quot;Lee, Yeonho&quot;, &quot;Kim, Hyeong Seok&quot;, &quot;Yi, Juneho&quot;], &quot;abstract&quot;: &quot;&quot;, &quot;type&quot;: &quot;journal-article&quot;, &quot;score&quot;: 25.957443, &quot;source_query&quot;: &quot;Industrial visual anomaly detection must operate with scarce defect labels and strict false-positive and latency constraints&quot;, &quot;source_catalog&quot;: &quot;Crossref&quot;, &quot;author_metadata_status&quot;: &quot;complete&quot;, &quot;author_warnings&quot;: [], &quot;citation_marker&quot;: &quot;(Park et al., 2024)&quot;, &quot;support_grade&quot;: &quot;metadata-only candidate&quot;, &quot;screening_note&quot;: &quot;Inspect abstract/publisher page before citing this paper as support.&quot;, &quot;enw_record&quot;: &quot;%0 Journal Article\n%T Visual defect obfuscation based self-supervised anomaly detection\n%A Park, YeongHyeon\n%A Kang, Sungho\n%A Kim, Myung Jin\n%A Lee, Yeonho\n%A Kim, Hyeong Seok\n%A Yi, Juneho\n%J Scientific Reports\n%V 14\n%N 1\n%P 18872\n%D 2024\n%@ 2045-2322\n%R 10.1038/s41598-024-69698-5\n%U https://doi.org/10.1038/s41598-024-69698-5&quot;, &quot;ris_record&quot;: &quot;TY  - JOUR\nTI  - Visual defect obfuscation based self-supervised anomaly detection\nAU  - Park, YeongHyeon\nAU  - Kang, Sungho\nAU  - Kim, Myung Jin\nAU  - Lee, Yeonho\nAU  - Kim, Hyeong Seok\nAU  - Yi, Juneho\nT2  - Scientific Reports\nJO  - Scientific Reports\nPY  - 2024\nY1  - 2024/08/14\nVL  - 14\nIS  - 1\nSP  - 18872\nDO  - 10.1038/s41598-024-69698-5\nUR  - https://doi.org/10.1038/s41598-024-69698-5\nSN  - 2045-2322\nN1  - Metadata-only candidate. Inspect abstract or publisher page before citing as support.\nER  -&quot;, &quot;journal_resource&quot;: &quot;urn:issn:2045-2322:vol:14:issue:1&quot;, &quot;zotero_rdf_article&quot;: &quot;    &lt;bib:Article rdf:about=\&quot;https://doi.org/10.1038/s41598-024-69698-5\&quot;&gt;\n        &lt;z:itemType&gt;journalArticle&lt;/z:itemType&gt;\n        &lt;dcterms:isPartOf rdf:resource=\&quot;urn:issn:2045-2322:vol:14:issue:1\&quot;/&gt;\n        &lt;bib:authors&gt;\n            &lt;rdf:Seq&gt;\n                &lt;rdf:li&gt;\n                    &lt;foaf:Person&gt;\n                        &lt;foaf:surname&gt;Park&lt;/foaf:surname&gt;\n                        &lt;foaf:givenName&gt;YeongHyeon&lt;/foaf:givenName&gt;\n                    &lt;/foaf:Person&gt;\n                &lt;/rdf:li&gt;\n                &lt;rdf:li&gt;\n                    &lt;foaf:Person&gt;\n                        &lt;foaf:surname&gt;Kang&lt;/foaf:surname&gt;\n                        &lt;foaf:givenName&gt;Sungho&lt;/foaf:givenName&gt;\n                    &lt;/foaf:Person&gt;\n                &lt;/rdf:li&gt;\n                &lt;rdf:li&gt;\n                    &lt;foaf:Person&gt;\n                        &lt;foaf:surname&gt;Kim&lt;/foaf:surname&gt;\n                        &lt;foaf:givenName&gt;Myung Jin&lt;/foaf:givenName&gt;\n                    &lt;/foaf:Person&gt;\n                &lt;/rdf:li&gt;\n                &lt;rdf:li&gt;\n                    &lt;foaf:Person&gt;\n                        &lt;foaf:surname&gt;Lee&lt;/foaf:surname&gt;\n                        &lt;foaf:givenName&gt;Yeonho&lt;/foaf:givenName&gt;\n                    &lt;/foaf:Person&gt;\n                &lt;/rdf:li&gt;\n                &lt;rdf:li&gt;\n                    &lt;foaf:Person&gt;\n                        &lt;foaf:surname&gt;Kim&lt;/foaf:surname&gt;\n                        &lt;foaf:givenName&gt;Hyeong Seok&lt;/foaf:givenName&gt;\n                    &lt;/foaf:Person&gt;\n                &lt;/rdf:li&gt;\n                &lt;rdf:li&gt;\n                    &lt;foaf:Person&gt;\n                        &lt;foaf:surname&gt;Yi&lt;/foaf:surname&gt;\n                        &lt;foaf:givenName&gt;Juneho&lt;/foaf:givenName&gt;\n                    &lt;/foaf:Person&gt;\n                &lt;/rdf:li&gt;\n            &lt;/rdf:Seq&gt;\n        &lt;/bib:authors&gt;\n        &lt;dc:title&gt;Visual defect obfuscation based self-supervised anomaly detection&lt;/dc:title&gt;\n        &lt;dc:date&gt;2024-08-14&lt;/dc:date&gt;\n        &lt;z:libraryCatalog&gt;Crossref&lt;/z:libraryCatalog&gt;\n        &lt;dc:identifier&gt;\n            &lt;dcterms:URI&gt;\n                &lt;rdf:value&gt;https://doi.org/10.1038/s41598-024-69698-5&lt;/rdf:value&gt;\n            &lt;/dcterms:URI&gt;\n        &lt;/dc:identifier&gt;\n        &lt;dc:identifier&gt;DOI 10.1038/s41598-024-69698-5&lt;/dc:identifier&gt;\n        &lt;bib:pages&gt;18872&lt;/bib:pages&gt;\n        &lt;z:citationKey&gt;parkVisualDefectObfuscation2024&lt;/z:citationKey&gt;\n    &lt;/bib:Article&gt;&quot;, &quot;zotero_rdf_journal&quot;: &quot;    &lt;bib:Journal rdf:about=\&quot;urn:issn:2045-2322:vol:14:issue:1\&quot;&gt;\n        &lt;prism:volume&gt;14&lt;/prism:volume&gt;\n        &lt;dc:title&gt;Scientific Reports&lt;/dc:title&gt;\n        &lt;prism:number&gt;1&lt;/prism:number&gt;\n        &lt;dc:identifier&gt;ISSN 2045-2322&lt;/dc:identifier&gt;\n    &lt;/bib:Journal&gt;&quot;}"
+                    >
+                      <div class="ref-controls">
+                        <label class="check-row"><input type="checkbox"> Select</label>
+                        <span class="marker">(Park et al., 2024)</span>
+                      </div>
+                      <div class="ref-topline">
+                        <span class="grade">metadata-only</span>
+                        <span>1 / 1</span>
+                      </div>
+                      <h3>Visual defect obfuscation based self-supervised anomaly detection</h3>
+                      <p class="meta">Scientific Reports · Nature Portfolio · 2024</p>
+                      <p class="authors">Park, YeongHyeon; Kang, Sungho; Kim, Myung Jin; Lee, Yeonho; Kim, Hyeong Seok; Yi, Juneho</p>
+                      <p class="abstract">No abstract snippet available from Crossref metadata.</p>
+                      <a href="https://doi.org/10.1038/s41598-024-69698-5" target="_blank" rel="noreferrer">https://doi.org/10.1038/s41598-024-69698-5</a>
+                    </article>
+                    
+              </div>
+            </section>
+            
+            <section class="segment-card" id="S002">
+              <div class="segment-head">
+                <span class="segment-id">S002 · Sentence 2</span>
+                <span class="query">Query: Patch-level memory methods compare local test descriptors with normal training descriptors but retaining and querying many patches creates a memory and inference burden</span>
+              </div>
+              <p class="segment-text">Patch-level memory methods compare local test descriptors with normal training descriptors, but retaining and querying many patches creates a memory and inference burden.</p>
+              <div class="insert-row">
+                <span>Suggested insert</span>
+                <code>(Sheridan et al., 2023) (Darby et al., 2022)</code>
+              </div>
+              <div class="references-grid">
+                
+                    <article
+                      class="reference"
+                      data-key="10.1038/s41592-022-01711-z"
+                      data-title="Local shape descriptors for neuron segmentation"
+                      data-journal="Nature Methods"
+                      data-doi="10.1038/s41592-022-01711-z"
+                      data-year="2023"
+                      data-authors="Sheridan, Arlo; Nguyen, Tri M.; Deb, Diptodip; Lee, Wei-Chung Allen; Saalfeld, Stephan; Turaga, Srinivas C.; Manor, Uri; Funke, Jan"
+                      data-segment="Patch-level memory methods compare local test descriptors with normal training descriptors, but retaining and querying many patches creates a memory and inference burden."
+                      data-record="{&quot;title&quot;: &quot;Local shape descriptors for neuron segmentation&quot;, &quot;journal&quot;: &quot;Nature Methods&quot;, &quot;family&quot;: &quot;Nature Portfolio&quot;, &quot;year&quot;: &quot;2023&quot;, &quot;doi&quot;: &quot;10.1038/s41592-022-01711-z&quot;, &quot;pmid&quot;: &quot;&quot;, &quot;url&quot;: &quot;https://doi.org/10.1038/s41592-022-01711-z&quot;, &quot;doi_url&quot;: &quot;https://doi.org/10.1038/s41592-022-01711-z&quot;, &quot;volume&quot;: &quot;20&quot;, &quot;issue&quot;: &quot;2&quot;, &quot;start_page&quot;: &quot;295&quot;, &quot;end_page&quot;: &quot;303&quot;, &quot;issn&quot;: &quot;1548-7091&quot;, &quot;authors&quot;: [&quot;Sheridan, Arlo&quot;, &quot;Nguyen, Tri M.&quot;, &quot;Deb, Diptodip&quot;, &quot;Lee, Wei-Chung Allen&quot;, &quot;Saalfeld, Stephan&quot;, &quot;Turaga, Srinivas C.&quot;, &quot;Manor, Uri&quot;, &quot;Funke, Jan&quot;], &quot;abstract&quot;: &quot;Abstract We present an auxiliary learning task for the problem of neuron segmentation in electron microscopy volumes. The auxiliary task consists of the prediction of local shape descriptors (LSDs), which we combine with conventional voxel-wise direct neighbor affinities for neuron boundary detection. The shape descriptors capture local statistics about the neuron to be segmented, such as diameter, elongation, and direction. On a study comparing several existing methods across various specimen, imaging techniques, and resolutions, auxiliary learning of LSDs consistently increases segmentation accuracy of affinity-based methods over a range of metrics. Furthermore, the addition of LSDs promotes affinity-based segmentation methods to be on par with the current state of the art for neuron segmentation (flood-filling networks), while being two orders of magnitudes more efficient—a critical requirement for the processing of future petabyte-sized datasets.&quot;, &quot;type&quot;: &quot;journal-article&quot;, &quot;score&quot;: 28.267101, &quot;source_query&quot;: &quot;Patch-level memory methods compare local test descriptors with normal training descriptors but retaining and querying many patches creates a memory and inference burden&quot;, &quot;source_catalog&quot;: &quot;Crossref&quot;, &quot;author_metadata_status&quot;: &quot;complete&quot;, &quot;author_warnings&quot;: [], &quot;citation_marker&quot;: &quot;(Sheridan et al., 2023)&quot;, &quot;support_grade&quot;: &quot;metadata-only candidate&quot;, &quot;screening_note&quot;: &quot;Inspect abstract/publisher page before citing this paper as support.&quot;, &quot;enw_record&quot;: &quot;%0 Journal Article\n%T Local shape descriptors for neuron segmentation\n%A Sheridan, Arlo\n%A Nguyen, Tri M.\n%A Deb, Diptodip\n%A Lee, Wei-Chung Allen\n%A Saalfeld, Stephan\n%A Turaga, Srinivas C.\n%A Manor, Uri\n%A Funke, Jan\n%J Nature Methods\n%V 20\n%N 2\n%P 295-303\n%D 2023\n%@ 1548-7091\n%R 10.1038/s41592-022-01711-z\n%U https://doi.org/10.1038/s41592-022-01711-z&quot;, &quot;ris_record&quot;: &quot;TY  - JOUR\nTI  - Local shape descriptors for neuron segmentation\nAU  - Sheridan, Arlo\nAU  - Nguyen, Tri M.\nAU  - Deb, Diptodip\nAU  - Lee, Wei-Chung Allen\nAU  - Saalfeld, Stephan\nAU  - Turaga, Srinivas C.\nAU  - Manor, Uri\nAU  - Funke, Jan\nT2  - Nature Methods\nJO  - Nature Methods\nPY  - 2023\nY1  - 2023/02/01\nVL  - 20\nIS  - 2\nSP  - 295\nEP  - 303\nDO  - 10.1038/s41592-022-01711-z\nUR  - https://doi.org/10.1038/s41592-022-01711-z\nSN  - 1548-7091\nN1  - Metadata-only candidate. Inspect abstract or publisher page before citing as support.\nER  -&quot;, &quot;journal_resource&quot;: &quot;urn:issn:1548-7091:vol:20:issue:2&quot;, &quot;zotero_rdf_article&quot;: &quot;    &lt;bib:Article rdf:about=\&quot;https://doi.org/10.1038/s41592-022-01711-z\&quot;&gt;\n        &lt;z:itemType&gt;journalArticle&lt;/z:itemType&gt;\n        &lt;dcterms:isPartOf rdf:resource=\&quot;urn:issn:1548-7091:vol:20:issue:2\&quot;/&gt;\n        &lt;bib:authors&gt;\n            &lt;rdf:Seq&gt;\n                &lt;rdf:li&gt;\n                    &lt;foaf:Person&gt;\n                        &lt;foaf:surname&gt;Sheridan&lt;/foaf:surname&gt;\n                        &lt;foaf:givenName&gt;Arlo&lt;/foaf:givenName&gt;\n                    &lt;/foaf:Person&gt;\n                &lt;/rdf:li&gt;\n                &lt;rdf:li&gt;\n                    &lt;foaf:Person&gt;\n                        &lt;foaf:surname&gt;Nguyen&lt;/foaf:surname&gt;\n                        &lt;foaf:givenName&gt;Tri M.&lt;/foaf:givenName&gt;\n                    &lt;/foaf:Person&gt;\n                &lt;/rdf:li&gt;\n                &lt;rdf:li&gt;\n                    &lt;foaf:Person&gt;\n                        &lt;foaf:surname&gt;Deb&lt;/foaf:surname&gt;\n                        &lt;foaf:givenName&gt;Diptodip&lt;/foaf:givenName&gt;\n                    &lt;/foaf:Person&gt;\n                &lt;/rdf:li&gt;\n                &lt;rdf:li&gt;\n                    &lt;foaf:Person&gt;\n                        &lt;foaf:surname&gt;Lee&lt;/foaf:surname&gt;\n                        &lt;foaf:givenName&gt;Wei-Chung Allen&lt;/foaf:givenName&gt;\n                    &lt;/foaf:Person&gt;\n                &lt;/rdf:li&gt;\n                &lt;rdf:li&gt;\n                    &lt;foaf:Person&gt;\n                        &lt;foaf:surname&gt;Saalfeld&lt;/foaf:surname&gt;\n                        &lt;foaf:givenName&gt;Stephan&lt;/foaf:givenName&gt;\n                    &lt;/foaf:Person&gt;\n                &lt;/rdf:li&gt;\n                &lt;rdf:li&gt;\n                    &lt;foaf:Person&gt;\n                        &lt;foaf:surname&gt;Turaga&lt;/foaf:surname&gt;\n                        &lt;foaf:givenName&gt;Srinivas C.&lt;/foaf:givenName&gt;\n                    &lt;/foaf:Person&gt;\n                &lt;/rdf:li&gt;\n                &lt;rdf:li&gt;\n                    &lt;foaf:Person&gt;\n                        &lt;foaf:surname&gt;Manor&lt;/foaf:surname&gt;\n                        &lt;foaf:givenName&gt;Uri&lt;/foaf:givenName&gt;\n                    &lt;/foaf:Person&gt;\n                &lt;/rdf:li&gt;\n                &lt;rdf:li&gt;\n                    &lt;foaf:Person&gt;\n                        &lt;foaf:surname&gt;Funke&lt;/foaf:surname&gt;\n                        &lt;foaf:givenName&gt;Jan&lt;/foaf:givenName&gt;\n                    &lt;/foaf:Person&gt;\n                &lt;/rdf:li&gt;\n            &lt;/rdf:Seq&gt;\n        &lt;/bib:authors&gt;\n        &lt;dc:title&gt;Local shape descriptors for neuron segmentation&lt;/dc:title&gt;\n        &lt;dc:date&gt;2023-02-01&lt;/dc:date&gt;\n        &lt;z:libraryCatalog&gt;Crossref&lt;/z:libraryCatalog&gt;\n        &lt;dc:identifier&gt;\n            &lt;dcterms:URI&gt;\n                &lt;rdf:value&gt;https://doi.org/10.1038/s41592-022-01711-z&lt;/rdf:value&gt;\n            &lt;/dcterms:URI&gt;\n        &lt;/dc:identifier&gt;\n        &lt;dc:identifier&gt;DOI 10.1038/s41592-022-01711-z&lt;/dc:identifier&gt;\n        &lt;bib:pages&gt;295-303&lt;/bib:pages&gt;\n        &lt;z:citationKey&gt;sheridanLocalShapeDescriptors2023&lt;/z:citationKey&gt;\n    &lt;/bib:Article&gt;&quot;, &quot;zotero_rdf_journal&quot;: &quot;    &lt;bib:Journal rdf:about=\&quot;urn:issn:1548-7091:vol:20:issue:2\&quot;&gt;\n        &lt;prism:volume&gt;20&lt;/prism:volume&gt;\n        &lt;dc:title&gt;Nature Methods&lt;/dc:title&gt;\n        &lt;prism:number&gt;2&lt;/prism:number&gt;\n        &lt;dc:identifier&gt;ISSN 1548-7091&lt;/dc:identifier&gt;\n    &lt;/bib:Journal&gt;&quot;}"
+                    >
+                      <div class="ref-controls">
+                        <label class="check-row"><input type="checkbox"> Select</label>
+                        <span class="marker">(Sheridan et al., 2023)</span>
+                      </div>
+                      <div class="ref-topline">
+                        <span class="grade">metadata-only</span>
+                        <span>1 / 2</span>
+                      </div>
+                      <h3>Local shape descriptors for neuron segmentation</h3>
+                      <p class="meta">Nature Methods · Nature Portfolio · 2023</p>
+                      <p class="authors">Sheridan, Arlo; Nguyen, Tri M.; Deb, Diptodip; Lee, Wei-Chung Allen; Saalfeld, Stephan; Turaga, Srinivas C.</p>
+                      <p class="abstract">Abstract We present an auxiliary learning task for the problem of neuron segmentation in electron microscopy volumes. The auxiliary task consists of the prediction of local shape descriptors (LSDs), which we combine with conventional voxel-wise direct neighbor affinities for neuron boundary detection. The shape descriptors capture local statistics about the neuron to be segment...</p>
+                      <a href="https://doi.org/10.1038/s41592-022-01711-z" target="_blank" rel="noreferrer">https://doi.org/10.1038/s41592-022-01711-z</a>
+                    </article>
+                    
+                    <article
+                      class="reference"
+                      data-key="10.1038/s41524-022-00847-y"
+                      data-title="Compressing local atomic neighbourhood descriptors"
+                      data-journal="npj Computational Materials"
+                      data-doi="10.1038/s41524-022-00847-y"
+                      data-year="2022"
+                      data-authors="Darby, James P.; Kermode, James R.; Csányi, Gábor"
+                      data-segment="Patch-level memory methods compare local test descriptors with normal training descriptors, but retaining and querying many patches creates a memory and inference burden."
+                      data-record="{&quot;title&quot;: &quot;Compressing local atomic neighbourhood descriptors&quot;, &quot;journal&quot;: &quot;npj Computational Materials&quot;, &quot;family&quot;: &quot;Nature Portfolio&quot;, &quot;year&quot;: &quot;2022&quot;, &quot;doi&quot;: &quot;10.1038/s41524-022-00847-y&quot;, &quot;pmid&quot;: &quot;&quot;, &quot;url&quot;: &quot;https://doi.org/10.1038/s41524-022-00847-y&quot;, &quot;doi_url&quot;: &quot;https://doi.org/10.1038/s41524-022-00847-y&quot;, &quot;volume&quot;: &quot;8&quot;, &quot;issue&quot;: &quot;1&quot;, &quot;start_page&quot;: &quot;166&quot;, &quot;end_page&quot;: &quot;&quot;, &quot;issn&quot;: &quot;2057-3960&quot;, &quot;authors&quot;: [&quot;Darby, James P.&quot;, &quot;Kermode, James R.&quot;, &quot;Csányi, Gábor&quot;], &quot;abstract&quot;: &quot;Abstract Many atomic descriptors are currently limited by their unfavourable scaling with the number of chemical elements S e.g. the length of body-ordered descriptors, such as the SOAP power spectrum (3-body) and the (ACE) (multiple body-orders), scales as ( N S ) ν where ν + 1 is the body-order and N is the number of radial basis functions used in the density expansion. We introduce two distinct approaches which can be used to overcome this scaling for the SOAP power spectrum. Firstly, we show that the power spectrum is amenable to lossless compression with respect to both S and N , so that the descriptor length can be reduced from $${{{\\mathcal{O}}}}({N}^{2}{S}^{2})$$ O ( N 2 S 2 ) to $${{{\\mathcal{O}}}}\\left(NS\\right)$$ O N S . Secondly, we introduce a generalised SOAP kernel, where compression is achieved through the use of the total, element agnostic density, in combination with radial projection. The ideas used in the generalised kernel are equally applicably to any other body-ordered descriptors and we demonstrate this for the (ACSF).&quot;, &quot;type&quot;: &quot;journal-article&quot;, &quot;score&quot;: 27.277885, &quot;source_query&quot;: &quot;Patch-level memory methods compare local test descriptors with normal training descriptors but retaining and querying many patches creates a memory and inference burden&quot;, &quot;source_catalog&quot;: &quot;Crossref&quot;, &quot;author_metadata_status&quot;: &quot;complete&quot;, &quot;author_warnings&quot;: [], &quot;citation_marker&quot;: &quot;(Darby et al., 2022)&quot;, &quot;support_grade&quot;: &quot;metadata-only candidate&quot;, &quot;screening_note&quot;: &quot;Inspect abstract/publisher page before citing this paper as support.&quot;, &quot;enw_record&quot;: &quot;%0 Journal Article\n%T Compressing local atomic neighbourhood descriptors\n%A Darby, James P.\n%A Kermode, James R.\n%A Csányi, Gábor\n%J npj Computational Materials\n%V 8\n%N 1\n%P 166\n%D 2022\n%@ 2057-3960\n%R 10.1038/s41524-022-00847-y\n%U https://doi.org/10.1038/s41524-022-00847-y&quot;, &quot;ris_record&quot;: &quot;TY  - JOUR\nTI  - Compressing local atomic neighbourhood descriptors\nAU  - Darby, James P.\nAU  - Kermode, James R.\nAU  - Csányi, Gábor\nT2  - npj Computational Materials\nJO  - npj Computational Materials\nPY  - 2022\nY1  - 2022/08/11\nVL  - 8\nIS  - 1\nSP  - 166\nDO  - 10.1038/s41524-022-00847-y\nUR  - https://doi.org/10.1038/s41524-022-00847-y\nSN  - 2057-3960\nN1  - Metadata-only candidate. Inspect abstract or publisher page before citing as support.\nER  -&quot;, &quot;journal_resource&quot;: &quot;urn:issn:2057-3960:vol:8:issue:1&quot;, &quot;zotero_rdf_article&quot;: &quot;    &lt;bib:Article rdf:about=\&quot;https://doi.org/10.1038/s41524-022-00847-y\&quot;&gt;\n        &lt;z:itemType&gt;journalArticle&lt;/z:itemType&gt;\n        &lt;dcterms:isPartOf rdf:resource=\&quot;urn:issn:2057-3960:vol:8:issue:1\&quot;/&gt;\n        &lt;bib:authors&gt;\n            &lt;rdf:Seq&gt;\n                &lt;rdf:li&gt;\n                    &lt;foaf:Person&gt;\n                        &lt;foaf:surname&gt;Darby&lt;/foaf:surname&gt;\n                        &lt;foaf:givenName&gt;James P.&lt;/foaf:givenName&gt;\n                    &lt;/foaf:Person&gt;\n                &lt;/rdf:li&gt;\n                &lt;rdf:li&gt;\n                    &lt;foaf:Person&gt;\n                        &lt;foaf:surname&gt;Kermode&lt;/foaf:surname&gt;\n                        &lt;foaf:givenName&gt;James R.&lt;/foaf:givenName&gt;\n                    &lt;/foaf:Person&gt;\n                &lt;/rdf:li&gt;\n                &lt;rdf:li&gt;\n                    &lt;foaf:Person&gt;\n                        &lt;foaf:surname&gt;Csányi&lt;/foaf:surname&gt;\n                        &lt;foaf:givenName&gt;Gábor&lt;/foaf:givenName&gt;\n                    &lt;/foaf:Person&gt;\n                &lt;/rdf:li&gt;\n            &lt;/rdf:Seq&gt;\n        &lt;/bib:authors&gt;\n        &lt;dc:title&gt;Compressing local atomic neighbourhood descriptors&lt;/dc:title&gt;\n        &lt;dc:date&gt;2022-08-11&lt;/dc:date&gt;\n        &lt;z:libraryCatalog&gt;Crossref&lt;/z:libraryCatalog&gt;\n        &lt;dc:identifier&gt;\n            &lt;dcterms:URI&gt;\n                &lt;rdf:value&gt;https://doi.org/10.1038/s41524-022-00847-y&lt;/rdf:value&gt;\n            &lt;/dcterms:URI&gt;\n        &lt;/dc:identifier&gt;\n        &lt;dc:identifier&gt;DOI 10.1038/s41524-022-00847-y&lt;/dc:identifier&gt;\n        &lt;bib:pages&gt;166&lt;/bib:pages&gt;\n        &lt;z:citationKey&gt;darbyCompressingLocalAtomic2022&lt;/z:citationKey&gt;\n    &lt;/bib:Article&gt;&quot;, &quot;zotero_rdf_journal&quot;: &quot;    &lt;bib:Journal rdf:about=\&quot;urn:issn:2057-3960:vol:8:issue:1\&quot;&gt;\n        &lt;prism:volume&gt;8&lt;/prism:volume&gt;\n        &lt;dc:title&gt;npj Computational Materials&lt;/dc:title&gt;\n        &lt;prism:number&gt;1&lt;/prism:number&gt;\n        &lt;dc:identifier&gt;ISSN 2057-3960&lt;/dc:identifier&gt;\n    &lt;/bib:Journal&gt;&quot;}"
+                    >
+                      <div class="ref-controls">
+                        <label class="check-row"><input type="checkbox"> Select</label>
+                        <span class="marker">(Darby et al., 2022)</span>
+                      </div>
+                      <div class="ref-topline">
+                        <span class="grade">metadata-only</span>
+                        <span>2 / 2</span>
+                      </div>
+                      <h3>Compressing local atomic neighbourhood descriptors</h3>
+                      <p class="meta">npj Computational Materials · Nature Portfolio · 2022</p>
+                      <p class="authors">Darby, James P.; Kermode, James R.; Csányi, Gábor</p>
+                      <p class="abstract">Abstract Many atomic descriptors are currently limited by their unfavourable scaling with the number of chemical elements S e.g. the length of body-ordered descriptors, such as the SOAP power spectrum (3-body) and the (ACE) (multiple body-orders), scales as ( N S ) ν where ν + 1 is the body-order and N is the number of radial basis functions used in the density expansion. We in...</p>
+                      <a href="https://doi.org/10.1038/s41524-022-00847-y" target="_blank" rel="noreferrer">https://doi.org/10.1038/s41524-022-00847-y</a>
+                    </article>
+                    
+              </div>
+            </section>
+            
+            <section class="segment-card" id="S003">
+              <div class="segment-head">
+                <span class="segment-id">S003 · Sentence 3</span>
+                <span class="query">Query: Recent industrial anomaly detection research includes millisecond-level inference high-resolution tiled processing and vision-language or prompt-based anomaly detection</span>
+              </div>
+              <p class="segment-text">Recent industrial anomaly detection research includes millisecond-level inference, high-resolution tiled processing, and vision-language or prompt-based anomaly detection.</p>
+              <div class="insert-row">
+                <span>Suggested insert</span>
+                <code>No candidate</code>
+              </div>
+              <div class="references-grid">
+                <p class="empty">No in-scope candidate was found for this segment.</p>
+              </div>
+            </section>
+            
+            <section class="segment-card" id="S004">
+              <div class="segment-head">
+                <span class="segment-id">S004 · Sentence 4</span>
+                <span class="query">Query: Real-world industrial benchmarks can contain weakly contrasted defects and imaging variation that are not represented by standard laboratory benchmarks</span>
+              </div>
+              <p class="segment-text">Real-world industrial benchmarks can contain weakly contrasted defects and imaging variation that are not represented by standard laboratory benchmarks.</p>
+              <div class="insert-row">
+                <span>Suggested insert</span>
+                <code>(Azad et al., 2026)</code>
+              </div>
+              <div class="references-grid">
+                
+                    <article
+                      class="reference"
+                      data-key="10.1038/s41591-025-04198-1"
+                      data-title="Principles to guide clinical AI readiness and move from benchmarks to real-world evaluation"
+                      data-journal="Nature Medicine"
+                      data-doi="10.1038/s41591-025-04198-1"
+                      data-year="2026"
+                      data-authors="Azad, Tej D.; Krumholz, Harlan M.; Saria, Suchi"
+                      data-segment="Real-world industrial benchmarks can contain weakly contrasted defects and imaging variation that are not represented by standard laboratory benchmarks."
+                      data-record="{&quot;title&quot;: &quot;Principles to guide clinical AI readiness and move from benchmarks to real-world evaluation&quot;, &quot;journal&quot;: &quot;Nature Medicine&quot;, &quot;family&quot;: &quot;Nature Portfolio&quot;, &quot;year&quot;: &quot;2026&quot;, &quot;doi&quot;: &quot;10.1038/s41591-025-04198-1&quot;, &quot;pmid&quot;: &quot;&quot;, &quot;url&quot;: &quot;https://doi.org/10.1038/s41591-025-04198-1&quot;, &quot;doi_url&quot;: &quot;https://doi.org/10.1038/s41591-025-04198-1&quot;, &quot;volume&quot;: &quot;32&quot;, &quot;issue&quot;: &quot;3&quot;, &quot;start_page&quot;: &quot;802&quot;, &quot;end_page&quot;: &quot;804&quot;, &quot;issn&quot;: &quot;1078-8956&quot;, &quot;authors&quot;: [&quot;Azad, Tej D.&quot;, &quot;Krumholz, Harlan M.&quot;, &quot;Saria, Suchi&quot;], &quot;abstract&quot;: &quot;&quot;, &quot;type&quot;: &quot;journal-article&quot;, &quot;score&quot;: 28.840378, &quot;source_query&quot;: &quot;Real-world industrial benchmarks can contain weakly contrasted defects and imaging variation that are not represented by standard laboratory benchmarks&quot;, &quot;source_catalog&quot;: &quot;Crossref&quot;, &quot;author_metadata_status&quot;: &quot;complete&quot;, &quot;author_warnings&quot;: [], &quot;citation_marker&quot;: &quot;(Azad et al., 2026)&quot;, &quot;support_grade&quot;: &quot;metadata-only candidate&quot;, &quot;screening_note&quot;: &quot;Inspect abstract/publisher page before citing this paper as support.&quot;, &quot;enw_record&quot;: &quot;%0 Journal Article\n%T Principles to guide clinical AI readiness and move from benchmarks to real-world evaluation\n%A Azad, Tej D.\n%A Krumholz, Harlan M.\n%A Saria, Suchi\n%J Nature Medicine\n%V 32\n%N 3\n%P 802-804\n%D 2026\n%@ 1078-8956\n%R 10.1038/s41591-025-04198-1\n%U https://doi.org/10.1038/s41591-025-04198-1&quot;, &quot;ris_record&quot;: &quot;TY  - JOUR\nTI  - Principles to guide clinical AI readiness and move from benchmarks to real-world evaluation\nAU  - Azad, Tej D.\nAU  - Krumholz, Harlan M.\nAU  - Saria, Suchi\nT2  - Nature Medicine\nJO  - Nature Medicine\nPY  - 2026\nY1  - 2026/03/01\nVL  - 32\nIS  - 3\nSP  - 802\nEP  - 804\nDO  - 10.1038/s41591-025-04198-1\nUR  - https://doi.org/10.1038/s41591-025-04198-1\nSN  - 1078-8956\nN1  - Metadata-only candidate. Inspect abstract or publisher page before citing as support.\nER  -&quot;, &quot;journal_resource&quot;: &quot;urn:issn:1078-8956:vol:32:issue:3&quot;, &quot;zotero_rdf_article&quot;: &quot;    &lt;bib:Article rdf:about=\&quot;https://doi.org/10.1038/s41591-025-04198-1\&quot;&gt;\n        &lt;z:itemType&gt;journalArticle&lt;/z:itemType&gt;\n        &lt;dcterms:isPartOf rdf:resource=\&quot;urn:issn:1078-8956:vol:32:issue:3\&quot;/&gt;\n        &lt;bib:authors&gt;\n            &lt;rdf:Seq&gt;\n                &lt;rdf:li&gt;\n                    &lt;foaf:Person&gt;\n                        &lt;foaf:surname&gt;Azad&lt;/foaf:surname&gt;\n                        &lt;foaf:givenName&gt;Tej D.&lt;/foaf:givenName&gt;\n                    &lt;/foaf:Person&gt;\n                &lt;/rdf:li&gt;\n                &lt;rdf:li&gt;\n                    &lt;foaf:Person&gt;\n                        &lt;foaf:surname&gt;Krumholz&lt;/foaf:surname&gt;\n                        &lt;foaf:givenName&gt;Harlan M.&lt;/foaf:givenName&gt;\n                    &lt;/foaf:Person&gt;\n                &lt;/rdf:li&gt;\n                &lt;rdf:li&gt;\n                    &lt;foaf:Person&gt;\n                        &lt;foaf:surname&gt;Saria&lt;/foaf:surname&gt;\n                        &lt;foaf:givenName&gt;Suchi&lt;/foaf:givenName&gt;\n                    &lt;/foaf:Person&gt;\n                &lt;/rdf:li&gt;\n            &lt;/rdf:Seq&gt;\n        &lt;/bib:authors&gt;\n        &lt;dc:title&gt;Principles to guide clinical AI readiness and move from benchmarks to real-world evaluation&lt;/dc:title&gt;\n        &lt;dc:date&gt;2026-03-01&lt;/dc:date&gt;\n        &lt;z:libraryCatalog&gt;Crossref&lt;/z:libraryCatalog&gt;\n        &lt;dc:identifier&gt;\n            &lt;dcterms:URI&gt;\n                &lt;rdf:value&gt;https://doi.org/10.1038/s41591-025-04198-1&lt;/rdf:value&gt;\n            &lt;/dcterms:URI&gt;\n        &lt;/dc:identifier&gt;\n        &lt;dc:identifier&gt;DOI 10.1038/s41591-025-04198-1&lt;/dc:identifier&gt;\n        &lt;bib:pages&gt;802-804&lt;/bib:pages&gt;\n        &lt;z:citationKey&gt;azadPrinciplesToGuide2026&lt;/z:citationKey&gt;\n    &lt;/bib:Article&gt;&quot;, &quot;zotero_rdf_journal&quot;: &quot;    &lt;bib:Journal rdf:about=\&quot;urn:issn:1078-8956:vol:32:issue:3\&quot;&gt;\n        &lt;prism:volume&gt;32&lt;/prism:volume&gt;\n        &lt;dc:title&gt;Nature Medicine&lt;/dc:title&gt;\n        &lt;prism:number&gt;3&lt;/prism:number&gt;\n        &lt;dc:identifier&gt;ISSN 1078-8956&lt;/dc:identifier&gt;\n    &lt;/bib:Journal&gt;&quot;}"
+                    >
+                      <div class="ref-controls">
+                        <label class="check-row"><input type="checkbox"> Select</label>
+                        <span class="marker">(Azad et al., 2026)</span>
+                      </div>
+                      <div class="ref-topline">
+                        <span class="grade">metadata-only</span>
+                        <span>1 / 1</span>
+                      </div>
+                      <h3>Principles to guide clinical AI readiness and move from benchmarks to real-world evaluation</h3>
+                      <p class="meta">Nature Medicine · Nature Portfolio · 2026</p>
+                      <p class="authors">Azad, Tej D.; Krumholz, Harlan M.; Saria, Suchi</p>
+                      <p class="abstract">No abstract snippet available from Crossref metadata.</p>
+                      <a href="https://doi.org/10.1038/s41591-025-04198-1" target="_blank" rel="noreferrer">https://doi.org/10.1038/s41591-025-04198-1</a>
+                    </article>
+                    
+              </div>
+            </section>
+            
+            <section class="segment-card" id="S005">
+              <div class="segment-head">
+                <span class="segment-id">S005 · Sentence 5</span>
+                <span class="query">Query: Selective routing should be evaluated with a matched compute budget so that selection quality is separated from the number of expensive evaluations</span>
+              </div>
+              <p class="segment-text">Selective routing should be evaluated with a matched compute budget so that selection quality is separated from the number of expensive evaluations.</p>
+              <div class="insert-row">
+                <span>Suggested insert</span>
+                <code>(Boucret et al., 2025)</code>
+              </div>
+              <div class="references-grid">
+                
+                    <article
+                      class="reference"
+                      data-key="10.1038/s41598-025-10531-y"
+                      data-title="Deep-learning model for embryo selection using time-lapse imaging of matched high-quality embryos"
+                      data-journal="Scientific Reports"
+                      data-doi="10.1038/s41598-025-10531-y"
+                      data-year="2025"
+                      data-authors="Boucret, Lisa; Chabrun, Floris; Boguenet, Magalie; Reynier, Pascal; Bouet, Pierre-Emmanuel; May-Panloup, Pascale"
+                      data-segment="Selective routing should be evaluated with a matched compute budget so that selection quality is separated from the number of expensive evaluations."
+                      data-record="{&quot;title&quot;: &quot;Deep-learning model for embryo selection using time-lapse imaging of matched high-quality embryos&quot;, &quot;journal&quot;: &quot;Scientific Reports&quot;, &quot;family&quot;: &quot;Nature Portfolio&quot;, &quot;year&quot;: &quot;2025&quot;, &quot;doi&quot;: &quot;10.1038/s41598-025-10531-y&quot;, &quot;pmid&quot;: &quot;&quot;, &quot;url&quot;: &quot;https://doi.org/10.1038/s41598-025-10531-y&quot;, &quot;doi_url&quot;: &quot;https://doi.org/10.1038/s41598-025-10531-y&quot;, &quot;volume&quot;: &quot;15&quot;, &quot;issue&quot;: &quot;1&quot;, &quot;start_page&quot;: &quot;28068&quot;, &quot;end_page&quot;: &quot;&quot;, &quot;issn&quot;: &quot;2045-2322&quot;, &quot;authors&quot;: [&quot;Boucret, Lisa&quot;, &quot;Chabrun, Floris&quot;, &quot;Boguenet, Magalie&quot;, &quot;Reynier, Pascal&quot;, &quot;Bouet, Pierre-Emmanuel&quot;, &quot;May-Panloup, Pascale&quot;], &quot;abstract&quot;: &quot;&quot;, &quot;type&quot;: &quot;journal-article&quot;, &quot;score&quot;: 17.589725, &quot;source_query&quot;: &quot;Selective routing should be evaluated with a matched compute budget so that selection quality is separated from the number of expensive evaluations&quot;, &quot;source_catalog&quot;: &quot;Crossref&quot;, &quot;author_metadata_status&quot;: &quot;complete&quot;, &quot;author_warnings&quot;: [], &quot;citation_marker&quot;: &quot;(Boucret et al., 2025)&quot;, &quot;support_grade&quot;: &quot;metadata-only candidate&quot;, &quot;screening_note&quot;: &quot;Inspect abstract/publisher page before citing this paper as support.&quot;, &quot;enw_record&quot;: &quot;%0 Journal Article\n%T Deep-learning model for embryo selection using time-lapse imaging of matched high-quality embryos\n%A Boucret, Lisa\n%A Chabrun, Floris\n%A Boguenet, Magalie\n%A Reynier, Pascal\n%A Bouet, Pierre-Emmanuel\n%A May-Panloup, Pascale\n%J Scientific Reports\n%V 15\n%N 1\n%P 28068\n%D 2025\n%@ 2045-2322\n%R 10.1038/s41598-025-10531-y\n%U https://doi.org/10.1038/s41598-025-10531-y&quot;, &quot;ris_record&quot;: &quot;TY  - JOUR\nTI  - Deep-learning model for embryo selection using time-lapse imaging of matched high-quality embryos\nAU  - Boucret, Lisa\nAU  - Chabrun, Floris\nAU  - Boguenet, Magalie\nAU  - Reynier, Pascal\nAU  - Bouet, Pierre-Emmanuel\nAU  - May-Panloup, Pascale\nT2  - Scientific Reports\nJO  - Scientific Reports\nPY  - 2025\nY1  - 2025/08/01\nVL  - 15\nIS  - 1\nSP  - 28068\nDO  - 10.1038/s41598-025-10531-y\nUR  - https://doi.org/10.1038/s41598-025-10531-y\nSN  - 2045-2322\nN1  - Metadata-only candidate. Inspect abstract or publisher page before citing as support.\nER  -&quot;, &quot;journal_resource&quot;: &quot;urn:issn:2045-2322:vol:15:issue:1&quot;, &quot;zotero_rdf_article&quot;: &quot;    &lt;bib:Article rdf:about=\&quot;https://doi.org/10.1038/s41598-025-10531-y\&quot;&gt;\n        &lt;z:itemType&gt;journalArticle&lt;/z:itemType&gt;\n        &lt;dcterms:isPartOf rdf:resource=\&quot;urn:issn:2045-2322:vol:15:issue:1\&quot;/&gt;\n        &lt;bib:authors&gt;\n            &lt;rdf:Seq&gt;\n                &lt;rdf:li&gt;\n                    &lt;foaf:Person&gt;\n                        &lt;foaf:surname&gt;Boucret&lt;/foaf:surname&gt;\n                        &lt;foaf:givenName&gt;Lisa&lt;/foaf:givenName&gt;\n                    &lt;/foaf:Person&gt;\n                &lt;/rdf:li&gt;\n                &lt;rdf:li&gt;\n                    &lt;foaf:Person&gt;\n                        &lt;foaf:surname&gt;Chabrun&lt;/foaf:surname&gt;\n                        &lt;foaf:givenName&gt;Floris&lt;/foaf:givenName&gt;\n                    &lt;/foaf:Person&gt;\n                &lt;/rdf:li&gt;\n                &lt;rdf:li&gt;\n                    &lt;foaf:Person&gt;\n                        &lt;foaf:surname&gt;Boguenet&lt;/foaf:surname&gt;\n                        &lt;foaf:givenName&gt;Magalie&lt;/foaf:givenName&gt;\n                    &lt;/foaf:Person&gt;\n                &lt;/rdf:li&gt;\n                &lt;rdf:li&gt;\n                    &lt;foaf:Person&gt;\n                        &lt;foaf:surname&gt;Reynier&lt;/foaf:surname&gt;\n                        &lt;foaf:givenName&gt;Pascal&lt;/foaf:givenName&gt;\n                    &lt;/foaf:Person&gt;\n                &lt;/rdf:li&gt;\n                &lt;rdf:li&gt;\n                    &lt;foaf:Person&gt;\n                        &lt;foaf:surname&gt;Bouet&lt;/foaf:surname&gt;\n                        &lt;foaf:givenName&gt;Pierre-Emmanuel&lt;/foaf:givenName&gt;\n                    &lt;/foaf:Person&gt;\n                &lt;/rdf:li&gt;\n                &lt;rdf:li&gt;\n                    &lt;foaf:Person&gt;\n                        &lt;foaf:surname&gt;May-Panloup&lt;/foaf:surname&gt;\n                        &lt;foaf:givenName&gt;Pascale&lt;/foaf:givenName&gt;\n                    &lt;/foaf:Person&gt;\n                &lt;/rdf:li&gt;\n            &lt;/rdf:Seq&gt;\n        &lt;/bib:authors&gt;\n        &lt;dc:title&gt;Deep-learning model for embryo selection using time-lapse imaging of matched high-quality embryos&lt;/dc:title&gt;\n        &lt;dc:date&gt;2025-08-01&lt;/dc:date&gt;\n        &lt;z:libraryCatalog&gt;Crossref&lt;/z:libraryCatalog&gt;\n        &lt;dc:identifier&gt;\n            &lt;dcterms:URI&gt;\n                &lt;rdf:value&gt;https://doi.org/10.1038/s41598-025-10531-y&lt;/rdf:value&gt;\n            &lt;/dcterms:URI&gt;\n        &lt;/dc:identifier&gt;\n        &lt;dc:identifier&gt;DOI 10.1038/s41598-025-10531-y&lt;/dc:identifier&gt;\n        &lt;bib:pages&gt;28068&lt;/bib:pages&gt;\n        &lt;z:citationKey&gt;boucretDeepLearningModel2025&lt;/z:citationKey&gt;\n    &lt;/bib:Article&gt;&quot;, &quot;zotero_rdf_journal&quot;: &quot;    &lt;bib:Journal rdf:about=\&quot;urn:issn:2045-2322:vol:15:issue:1\&quot;&gt;\n        &lt;prism:volume&gt;15&lt;/prism:volume&gt;\n        &lt;dc:title&gt;Scientific Reports&lt;/dc:title&gt;\n        &lt;prism:number&gt;1&lt;/prism:number&gt;\n        &lt;dc:identifier&gt;ISSN 2045-2322&lt;/dc:identifier&gt;\n    &lt;/bib:Journal&gt;&quot;}"
+                    >
+                      <div class="ref-controls">
+                        <label class="check-row"><input type="checkbox"> Select</label>
+                        <span class="marker">(Boucret et al., 2025)</span>
+                      </div>
+                      <div class="ref-topline">
+                        <span class="grade">metadata-only</span>
+                        <span>1 / 1</span>
+                      </div>
+                      <h3>Deep-learning model for embryo selection using time-lapse imaging of matched high-quality embryos</h3>
+                      <p class="meta">Scientific Reports · Nature Portfolio · 2025</p>
+                      <p class="authors">Boucret, Lisa; Chabrun, Floris; Boguenet, Magalie; Reynier, Pascal; Bouet, Pierre-Emmanuel; May-Panloup, Pascale</p>
+                      <p class="abstract">No abstract snippet available from Crossref metadata.</p>
+                      <a href="https://doi.org/10.1038/s41598-025-10531-y" target="_blank" rel="noreferrer">https://doi.org/10.1038/s41598-025-10531-y</a>
+                    </article>
+                    
+              </div>
+            </section>
+            
+    </main>
+    <aside>
+      <h2 class="selection-title">Selected references</h2>
+      <p class="selection-meta">Tick the references you want. The download button exports the selection in the chosen format. If nothing is selected, it exports all references.</p>
+      <div id="selectionList" class="selection-list"></div>
+      <div id="selectionEmpty" class="empty-state">No references selected yet.</div>
+    </aside>
+  </div>
+  <div class="modal-overlay" id="summaryModal" aria-hidden="false">
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="summaryTitle">
+      <div class="modal-inner">
+        <h2 id="summaryTitle">Ready to review citations</h2>
+        <p>This page behaves more like a compact Scholar browser: filter by year, browse related results, select the citations you trust, and download them as ENW, RIS, or Zotero RDF.</p>
+        <div class="stats">
+          <div class="stat"><b>5</b><span>segments</span></div>
+          <div class="stat"><b>5</b><span>unique references</span></div>
+        </div>
+        <p class="meta">Important: these are still metadata-level candidates. Selection is your decision, not an automatic validity guarantee.</p>
+        <div class="modal-actions">
+          <a href="references.ris" download>Download original RIS file</a>
+          <button id="closeSummary" type="button" onclick="document.getElementById('summaryModal').classList.add('is-hidden'); document.getElementById('summaryModal').setAttribute('aria-hidden', 'true');">Start browsing</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script id="citationData" type="application/json">{"segmentCount": 5, "referenceCount": 5, "defaultExportFormat": "ris", "defaultExportName": "references.ris", "references": [{"title": "Visual defect obfuscation based self-supervised anomaly detection", "journal": "Scientific Reports", "family": "Nature Portfolio", "year": "2024", "doi": "10.1038/s41598-024-69698-5", "pmid": "", "url": "https://doi.org/10.1038/s41598-024-69698-5", "doi_url": "https://doi.org/10.1038/s41598-024-69698-5", "volume": "14", "issue": "1", "start_page": "18872", "end_page": "", "issn": "2045-2322", "authors": ["Park, YeongHyeon", "Kang, Sungho", "Kim, Myung Jin", "Lee, Yeonho", "Kim, Hyeong Seok", "Yi, Juneho"], "abstract": "", "type": "journal-article", "score": 25.957443, "source_query": "Industrial visual anomaly detection must operate with scarce defect labels and strict false-positive and latency constraints", "source_catalog": "Crossref", "author_metadata_status": "complete", "author_warnings": [], "citation_marker": "(Park et al., 2024)", "support_grade": "metadata-only candidate", "screening_note": "Inspect abstract/publisher page before citing this paper as support.", "enw_record": "%0 Journal Article\n%T Visual defect obfuscation based self-supervised anomaly detection\n%A Park, YeongHyeon\n%A Kang, Sungho\n%A Kim, Myung Jin\n%A Lee, Yeonho\n%A Kim, Hyeong Seok\n%A Yi, Juneho\n%J Scientific Reports\n%V 14\n%N 1\n%P 18872\n%D 2024\n%@ 2045-2322\n%R 10.1038/s41598-024-69698-5\n%U https://doi.org/10.1038/s41598-024-69698-5", "ris_record": "TY  - JOUR\nTI  - Visual defect obfuscation based self-supervised anomaly detection\nAU  - Park, YeongHyeon\nAU  - Kang, Sungho\nAU  - Kim, Myung Jin\nAU  - Lee, Yeonho\nAU  - Kim, Hyeong Seok\nAU  - Yi, Juneho\nT2  - Scientific Reports\nJO  - Scientific Reports\nPY  - 2024\nY1  - 2024/08/14\nVL  - 14\nIS  - 1\nSP  - 18872\nDO  - 10.1038/s41598-024-69698-5\nUR  - https://doi.org/10.1038/s41598-024-69698-5\nSN  - 2045-2322\nN1  - Metadata-only candidate. Inspect abstract or publisher page before citing as support.\nER  -", "journal_resource": "urn:issn:2045-2322:vol:14:issue:1", "zotero_rdf_article": "    <bib:Article rdf:about=\"https://doi.org/10.1038/s41598-024-69698-5\">\n        <z:itemType>journalArticle</z:itemType>\n        <dcterms:isPartOf rdf:resource=\"urn:issn:2045-2322:vol:14:issue:1\"/>\n        <bib:authors>\n            <rdf:Seq>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Park</foaf:surname>\n                        <foaf:givenName>YeongHyeon</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Kang</foaf:surname>\n                        <foaf:givenName>Sungho</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Kim</foaf:surname>\n                        <foaf:givenName>Myung Jin</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Lee</foaf:surname>\n                        <foaf:givenName>Yeonho</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Kim</foaf:surname>\n                        <foaf:givenName>Hyeong Seok</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Yi</foaf:surname>\n                        <foaf:givenName>Juneho</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n            </rdf:Seq>\n        </bib:authors>\n        <dc:title>Visual defect obfuscation based self-supervised anomaly detection</dc:title>\n        <dc:date>2024-08-14</dc:date>\n        <z:libraryCatalog>Crossref</z:libraryCatalog>\n        <dc:identifier>\n            <dcterms:URI>\n                <rdf:value>https://doi.org/10.1038/s41598-024-69698-5</rdf:value>\n            </dcterms:URI>\n        </dc:identifier>\n        <dc:identifier>DOI 10.1038/s41598-024-69698-5</dc:identifier>\n        <bib:pages>18872</bib:pages>\n        <z:citationKey>parkVisualDefectObfuscation2024</z:citationKey>\n    </bib:Article>", "zotero_rdf_journal": "    <bib:Journal rdf:about=\"urn:issn:2045-2322:vol:14:issue:1\">\n        <prism:volume>14</prism:volume>\n        <dc:title>Scientific Reports</dc:title>\n        <prism:number>1</prism:number>\n        <dc:identifier>ISSN 2045-2322</dc:identifier>\n    </bib:Journal>"}, {"title": "Local shape descriptors for neuron segmentation", "journal": "Nature Methods", "family": "Nature Portfolio", "year": "2023", "doi": "10.1038/s41592-022-01711-z", "pmid": "", "url": "https://doi.org/10.1038/s41592-022-01711-z", "doi_url": "https://doi.org/10.1038/s41592-022-01711-z", "volume": "20", "issue": "2", "start_page": "295", "end_page": "303", "issn": "1548-7091", "authors": ["Sheridan, Arlo", "Nguyen, Tri M.", "Deb, Diptodip", "Lee, Wei-Chung Allen", "Saalfeld, Stephan", "Turaga, Srinivas C.", "Manor, Uri", "Funke, Jan"], "abstract": "Abstract We present an auxiliary learning task for the problem of neuron segmentation in electron microscopy volumes. The auxiliary task consists of the prediction of local shape descriptors (LSDs), which we combine with conventional voxel-wise direct neighbor affinities for neuron boundary detection. The shape descriptors capture local statistics about the neuron to be segmented, such as diameter, elongation, and direction. On a study comparing several existing methods across various specimen, imaging techniques, and resolutions, auxiliary learning of LSDs consistently increases segmentation accuracy of affinity-based methods over a range of metrics. Furthermore, the addition of LSDs promotes affinity-based segmentation methods to be on par with the current state of the art for neuron segmentation (flood-filling networks), while being two orders of magnitudes more efficient—a critical requirement for the processing of future petabyte-sized datasets.", "type": "journal-article", "score": 28.267101, "source_query": "Patch-level memory methods compare local test descriptors with normal training descriptors but retaining and querying many patches creates a memory and inference burden", "source_catalog": "Crossref", "author_metadata_status": "complete", "author_warnings": [], "citation_marker": "(Sheridan et al., 2023)", "support_grade": "metadata-only candidate", "screening_note": "Inspect abstract/publisher page before citing this paper as support.", "enw_record": "%0 Journal Article\n%T Local shape descriptors for neuron segmentation\n%A Sheridan, Arlo\n%A Nguyen, Tri M.\n%A Deb, Diptodip\n%A Lee, Wei-Chung Allen\n%A Saalfeld, Stephan\n%A Turaga, Srinivas C.\n%A Manor, Uri\n%A Funke, Jan\n%J Nature Methods\n%V 20\n%N 2\n%P 295-303\n%D 2023\n%@ 1548-7091\n%R 10.1038/s41592-022-01711-z\n%U https://doi.org/10.1038/s41592-022-01711-z", "ris_record": "TY  - JOUR\nTI  - Local shape descriptors for neuron segmentation\nAU  - Sheridan, Arlo\nAU  - Nguyen, Tri M.\nAU  - Deb, Diptodip\nAU  - Lee, Wei-Chung Allen\nAU  - Saalfeld, Stephan\nAU  - Turaga, Srinivas C.\nAU  - Manor, Uri\nAU  - Funke, Jan\nT2  - Nature Methods\nJO  - Nature Methods\nPY  - 2023\nY1  - 2023/02/01\nVL  - 20\nIS  - 2\nSP  - 295\nEP  - 303\nDO  - 10.1038/s41592-022-01711-z\nUR  - https://doi.org/10.1038/s41592-022-01711-z\nSN  - 1548-7091\nN1  - Metadata-only candidate. Inspect abstract or publisher page before citing as support.\nER  -", "journal_resource": "urn:issn:1548-7091:vol:20:issue:2", "zotero_rdf_article": "    <bib:Article rdf:about=\"https://doi.org/10.1038/s41592-022-01711-z\">\n        <z:itemType>journalArticle</z:itemType>\n        <dcterms:isPartOf rdf:resource=\"urn:issn:1548-7091:vol:20:issue:2\"/>\n        <bib:authors>\n            <rdf:Seq>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Sheridan</foaf:surname>\n                        <foaf:givenName>Arlo</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Nguyen</foaf:surname>\n                        <foaf:givenName>Tri M.</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Deb</foaf:surname>\n                        <foaf:givenName>Diptodip</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Lee</foaf:surname>\n                        <foaf:givenName>Wei-Chung Allen</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Saalfeld</foaf:surname>\n                        <foaf:givenName>Stephan</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Turaga</foaf:surname>\n                        <foaf:givenName>Srinivas C.</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Manor</foaf:surname>\n                        <foaf:givenName>Uri</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Funke</foaf:surname>\n                        <foaf:givenName>Jan</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n            </rdf:Seq>\n        </bib:authors>\n        <dc:title>Local shape descriptors for neuron segmentation</dc:title>\n        <dc:date>2023-02-01</dc:date>\n        <z:libraryCatalog>Crossref</z:libraryCatalog>\n        <dc:identifier>\n            <dcterms:URI>\n                <rdf:value>https://doi.org/10.1038/s41592-022-01711-z</rdf:value>\n            </dcterms:URI>\n        </dc:identifier>\n        <dc:identifier>DOI 10.1038/s41592-022-01711-z</dc:identifier>\n        <bib:pages>295-303</bib:pages>\n        <z:citationKey>sheridanLocalShapeDescriptors2023</z:citationKey>\n    </bib:Article>", "zotero_rdf_journal": "    <bib:Journal rdf:about=\"urn:issn:1548-7091:vol:20:issue:2\">\n        <prism:volume>20</prism:volume>\n        <dc:title>Nature Methods</dc:title>\n        <prism:number>2</prism:number>\n        <dc:identifier>ISSN 1548-7091</dc:identifier>\n    </bib:Journal>"}, {"title": "Compressing local atomic neighbourhood descriptors", "journal": "npj Computational Materials", "family": "Nature Portfolio", "year": "2022", "doi": "10.1038/s41524-022-00847-y", "pmid": "", "url": "https://doi.org/10.1038/s41524-022-00847-y", "doi_url": "https://doi.org/10.1038/s41524-022-00847-y", "volume": "8", "issue": "1", "start_page": "166", "end_page": "", "issn": "2057-3960", "authors": ["Darby, James P.", "Kermode, James R.", "Csányi, Gábor"], "abstract": "Abstract Many atomic descriptors are currently limited by their unfavourable scaling with the number of chemical elements S e.g. the length of body-ordered descriptors, such as the SOAP power spectrum (3-body) and the (ACE) (multiple body-orders), scales as ( N S ) ν where ν + 1 is the body-order and N is the number of radial basis functions used in the density expansion. We introduce two distinct approaches which can be used to overcome this scaling for the SOAP power spectrum. Firstly, we show that the power spectrum is amenable to lossless compression with respect to both S and N , so that the descriptor length can be reduced from $${{{\\mathcal{O}}}}({N}^{2}{S}^{2})$$ O ( N 2 S 2 ) to $${{{\\mathcal{O}}}}\\left(NS\\right)$$ O N S . Secondly, we introduce a generalised SOAP kernel, where compression is achieved through the use of the total, element agnostic density, in combination with radial projection. The ideas used in the generalised kernel are equally applicably to any other body-ordered descriptors and we demonstrate this for the (ACSF).", "type": "journal-article", "score": 27.277885, "source_query": "Patch-level memory methods compare local test descriptors with normal training descriptors but retaining and querying many patches creates a memory and inference burden", "source_catalog": "Crossref", "author_metadata_status": "complete", "author_warnings": [], "citation_marker": "(Darby et al., 2022)", "support_grade": "metadata-only candidate", "screening_note": "Inspect abstract/publisher page before citing this paper as support.", "enw_record": "%0 Journal Article\n%T Compressing local atomic neighbourhood descriptors\n%A Darby, James P.\n%A Kermode, James R.\n%A Csányi, Gábor\n%J npj Computational Materials\n%V 8\n%N 1\n%P 166\n%D 2022\n%@ 2057-3960\n%R 10.1038/s41524-022-00847-y\n%U https://doi.org/10.1038/s41524-022-00847-y", "ris_record": "TY  - JOUR\nTI  - Compressing local atomic neighbourhood descriptors\nAU  - Darby, James P.\nAU  - Kermode, James R.\nAU  - Csányi, Gábor\nT2  - npj Computational Materials\nJO  - npj Computational Materials\nPY  - 2022\nY1  - 2022/08/11\nVL  - 8\nIS  - 1\nSP  - 166\nDO  - 10.1038/s41524-022-00847-y\nUR  - https://doi.org/10.1038/s41524-022-00847-y\nSN  - 2057-3960\nN1  - Metadata-only candidate. Inspect abstract or publisher page before citing as support.\nER  -", "journal_resource": "urn:issn:2057-3960:vol:8:issue:1", "zotero_rdf_article": "    <bib:Article rdf:about=\"https://doi.org/10.1038/s41524-022-00847-y\">\n        <z:itemType>journalArticle</z:itemType>\n        <dcterms:isPartOf rdf:resource=\"urn:issn:2057-3960:vol:8:issue:1\"/>\n        <bib:authors>\n            <rdf:Seq>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Darby</foaf:surname>\n                        <foaf:givenName>James P.</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Kermode</foaf:surname>\n                        <foaf:givenName>James R.</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Csányi</foaf:surname>\n                        <foaf:givenName>Gábor</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n            </rdf:Seq>\n        </bib:authors>\n        <dc:title>Compressing local atomic neighbourhood descriptors</dc:title>\n        <dc:date>2022-08-11</dc:date>\n        <z:libraryCatalog>Crossref</z:libraryCatalog>\n        <dc:identifier>\n            <dcterms:URI>\n                <rdf:value>https://doi.org/10.1038/s41524-022-00847-y</rdf:value>\n            </dcterms:URI>\n        </dc:identifier>\n        <dc:identifier>DOI 10.1038/s41524-022-00847-y</dc:identifier>\n        <bib:pages>166</bib:pages>\n        <z:citationKey>darbyCompressingLocalAtomic2022</z:citationKey>\n    </bib:Article>", "zotero_rdf_journal": "    <bib:Journal rdf:about=\"urn:issn:2057-3960:vol:8:issue:1\">\n        <prism:volume>8</prism:volume>\n        <dc:title>npj Computational Materials</dc:title>\n        <prism:number>1</prism:number>\n        <dc:identifier>ISSN 2057-3960</dc:identifier>\n    </bib:Journal>"}, {"title": "Principles to guide clinical AI readiness and move from benchmarks to real-world evaluation", "journal": "Nature Medicine", "family": "Nature Portfolio", "year": "2026", "doi": "10.1038/s41591-025-04198-1", "pmid": "", "url": "https://doi.org/10.1038/s41591-025-04198-1", "doi_url": "https://doi.org/10.1038/s41591-025-04198-1", "volume": "32", "issue": "3", "start_page": "802", "end_page": "804", "issn": "1078-8956", "authors": ["Azad, Tej D.", "Krumholz, Harlan M.", "Saria, Suchi"], "abstract": "", "type": "journal-article", "score": 28.840378, "source_query": "Real-world industrial benchmarks can contain weakly contrasted defects and imaging variation that are not represented by standard laboratory benchmarks", "source_catalog": "Crossref", "author_metadata_status": "complete", "author_warnings": [], "citation_marker": "(Azad et al., 2026)", "support_grade": "metadata-only candidate", "screening_note": "Inspect abstract/publisher page before citing this paper as support.", "enw_record": "%0 Journal Article\n%T Principles to guide clinical AI readiness and move from benchmarks to real-world evaluation\n%A Azad, Tej D.\n%A Krumholz, Harlan M.\n%A Saria, Suchi\n%J Nature Medicine\n%V 32\n%N 3\n%P 802-804\n%D 2026\n%@ 1078-8956\n%R 10.1038/s41591-025-04198-1\n%U https://doi.org/10.1038/s41591-025-04198-1", "ris_record": "TY  - JOUR\nTI  - Principles to guide clinical AI readiness and move from benchmarks to real-world evaluation\nAU  - Azad, Tej D.\nAU  - Krumholz, Harlan M.\nAU  - Saria, Suchi\nT2  - Nature Medicine\nJO  - Nature Medicine\nPY  - 2026\nY1  - 2026/03/01\nVL  - 32\nIS  - 3\nSP  - 802\nEP  - 804\nDO  - 10.1038/s41591-025-04198-1\nUR  - https://doi.org/10.1038/s41591-025-04198-1\nSN  - 1078-8956\nN1  - Metadata-only candidate. Inspect abstract or publisher page before citing as support.\nER  -", "journal_resource": "urn:issn:1078-8956:vol:32:issue:3", "zotero_rdf_article": "    <bib:Article rdf:about=\"https://doi.org/10.1038/s41591-025-04198-1\">\n        <z:itemType>journalArticle</z:itemType>\n        <dcterms:isPartOf rdf:resource=\"urn:issn:1078-8956:vol:32:issue:3\"/>\n        <bib:authors>\n            <rdf:Seq>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Azad</foaf:surname>\n                        <foaf:givenName>Tej D.</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Krumholz</foaf:surname>\n                        <foaf:givenName>Harlan M.</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Saria</foaf:surname>\n                        <foaf:givenName>Suchi</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n            </rdf:Seq>\n        </bib:authors>\n        <dc:title>Principles to guide clinical AI readiness and move from benchmarks to real-world evaluation</dc:title>\n        <dc:date>2026-03-01</dc:date>\n        <z:libraryCatalog>Crossref</z:libraryCatalog>\n        <dc:identifier>\n            <dcterms:URI>\n                <rdf:value>https://doi.org/10.1038/s41591-025-04198-1</rdf:value>\n            </dcterms:URI>\n        </dc:identifier>\n        <dc:identifier>DOI 10.1038/s41591-025-04198-1</dc:identifier>\n        <bib:pages>802-804</bib:pages>\n        <z:citationKey>azadPrinciplesToGuide2026</z:citationKey>\n    </bib:Article>", "zotero_rdf_journal": "    <bib:Journal rdf:about=\"urn:issn:1078-8956:vol:32:issue:3\">\n        <prism:volume>32</prism:volume>\n        <dc:title>Nature Medicine</dc:title>\n        <prism:number>3</prism:number>\n        <dc:identifier>ISSN 1078-8956</dc:identifier>\n    </bib:Journal>"}, {"title": "Deep-learning model for embryo selection using time-lapse imaging of matched high-quality embryos", "journal": "Scientific Reports", "family": "Nature Portfolio", "year": "2025", "doi": "10.1038/s41598-025-10531-y", "pmid": "", "url": "https://doi.org/10.1038/s41598-025-10531-y", "doi_url": "https://doi.org/10.1038/s41598-025-10531-y", "volume": "15", "issue": "1", "start_page": "28068", "end_page": "", "issn": "2045-2322", "authors": ["Boucret, Lisa", "Chabrun, Floris", "Boguenet, Magalie", "Reynier, Pascal", "Bouet, Pierre-Emmanuel", "May-Panloup, Pascale"], "abstract": "", "type": "journal-article", "score": 17.589725, "source_query": "Selective routing should be evaluated with a matched compute budget so that selection quality is separated from the number of expensive evaluations", "source_catalog": "Crossref", "author_metadata_status": "complete", "author_warnings": [], "citation_marker": "(Boucret et al., 2025)", "support_grade": "metadata-only candidate", "screening_note": "Inspect abstract/publisher page before citing this paper as support.", "enw_record": "%0 Journal Article\n%T Deep-learning model for embryo selection using time-lapse imaging of matched high-quality embryos\n%A Boucret, Lisa\n%A Chabrun, Floris\n%A Boguenet, Magalie\n%A Reynier, Pascal\n%A Bouet, Pierre-Emmanuel\n%A May-Panloup, Pascale\n%J Scientific Reports\n%V 15\n%N 1\n%P 28068\n%D 2025\n%@ 2045-2322\n%R 10.1038/s41598-025-10531-y\n%U https://doi.org/10.1038/s41598-025-10531-y", "ris_record": "TY  - JOUR\nTI  - Deep-learning model for embryo selection using time-lapse imaging of matched high-quality embryos\nAU  - Boucret, Lisa\nAU  - Chabrun, Floris\nAU  - Boguenet, Magalie\nAU  - Reynier, Pascal\nAU  - Bouet, Pierre-Emmanuel\nAU  - May-Panloup, Pascale\nT2  - Scientific Reports\nJO  - Scientific Reports\nPY  - 2025\nY1  - 2025/08/01\nVL  - 15\nIS  - 1\nSP  - 28068\nDO  - 10.1038/s41598-025-10531-y\nUR  - https://doi.org/10.1038/s41598-025-10531-y\nSN  - 2045-2322\nN1  - Metadata-only candidate. Inspect abstract or publisher page before citing as support.\nER  -", "journal_resource": "urn:issn:2045-2322:vol:15:issue:1", "zotero_rdf_article": "    <bib:Article rdf:about=\"https://doi.org/10.1038/s41598-025-10531-y\">\n        <z:itemType>journalArticle</z:itemType>\n        <dcterms:isPartOf rdf:resource=\"urn:issn:2045-2322:vol:15:issue:1\"/>\n        <bib:authors>\n            <rdf:Seq>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Boucret</foaf:surname>\n                        <foaf:givenName>Lisa</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Chabrun</foaf:surname>\n                        <foaf:givenName>Floris</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Boguenet</foaf:surname>\n                        <foaf:givenName>Magalie</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Reynier</foaf:surname>\n                        <foaf:givenName>Pascal</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Bouet</foaf:surname>\n                        <foaf:givenName>Pierre-Emmanuel</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>May-Panloup</foaf:surname>\n                        <foaf:givenName>Pascale</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n            </rdf:Seq>\n        </bib:authors>\n        <dc:title>Deep-learning model for embryo selection using time-lapse imaging of matched high-quality embryos</dc:title>\n        <dc:date>2025-08-01</dc:date>\n        <z:libraryCatalog>Crossref</z:libraryCatalog>\n        <dc:identifier>\n            <dcterms:URI>\n                <rdf:value>https://doi.org/10.1038/s41598-025-10531-y</rdf:value>\n            </dcterms:URI>\n        </dc:identifier>\n        <dc:identifier>DOI 10.1038/s41598-025-10531-y</dc:identifier>\n        <bib:pages>28068</bib:pages>\n        <z:citationKey>boucretDeepLearningModel2025</z:citationKey>\n    </bib:Article>", "zotero_rdf_journal": "    <bib:Journal rdf:about=\"urn:issn:2045-2322:vol:15:issue:1\">\n        <prism:volume>15</prism:volume>\n        <dc:title>Scientific Reports</dc:title>\n        <prism:number>1</prism:number>\n        <dc:identifier>ISSN 2045-2322</dc:identifier>\n    </bib:Journal>"}], "segments": [{"id": "S001", "order": 1, "text": "Industrial visual anomaly detection must operate with scarce defect labels and strict false-positive and latency constraints.", "query": "Industrial visual anomaly detection must operate with scarce defect labels and strict false-positive and latency constraints", "suggestedInsertText": "(Park et al., 2024)", "references": [{"title": "Visual defect obfuscation based self-supervised anomaly detection", "journal": "Scientific Reports", "family": "Nature Portfolio", "year": "2024", "doi": "10.1038/s41598-024-69698-5", "pmid": "", "url": "https://doi.org/10.1038/s41598-024-69698-5", "doi_url": "https://doi.org/10.1038/s41598-024-69698-5", "volume": "14", "issue": "1", "start_page": "18872", "end_page": "", "issn": "2045-2322", "authors": ["Park, YeongHyeon", "Kang, Sungho", "Kim, Myung Jin", "Lee, Yeonho", "Kim, Hyeong Seok", "Yi, Juneho"], "abstract": "", "type": "journal-article", "score": 25.957443, "source_query": "Industrial visual anomaly detection must operate with scarce defect labels and strict false-positive and latency constraints", "source_catalog": "Crossref", "author_metadata_status": "complete", "author_warnings": [], "citation_marker": "(Park et al., 2024)", "support_grade": "metadata-only candidate", "screening_note": "Inspect abstract/publisher page before citing this paper as support.", "enw_record": "%0 Journal Article\n%T Visual defect obfuscation based self-supervised anomaly detection\n%A Park, YeongHyeon\n%A Kang, Sungho\n%A Kim, Myung Jin\n%A Lee, Yeonho\n%A Kim, Hyeong Seok\n%A Yi, Juneho\n%J Scientific Reports\n%V 14\n%N 1\n%P 18872\n%D 2024\n%@ 2045-2322\n%R 10.1038/s41598-024-69698-5\n%U https://doi.org/10.1038/s41598-024-69698-5", "ris_record": "TY  - JOUR\nTI  - Visual defect obfuscation based self-supervised anomaly detection\nAU  - Park, YeongHyeon\nAU  - Kang, Sungho\nAU  - Kim, Myung Jin\nAU  - Lee, Yeonho\nAU  - Kim, Hyeong Seok\nAU  - Yi, Juneho\nT2  - Scientific Reports\nJO  - Scientific Reports\nPY  - 2024\nY1  - 2024/08/14\nVL  - 14\nIS  - 1\nSP  - 18872\nDO  - 10.1038/s41598-024-69698-5\nUR  - https://doi.org/10.1038/s41598-024-69698-5\nSN  - 2045-2322\nN1  - Metadata-only candidate. Inspect abstract or publisher page before citing as support.\nER  -", "journal_resource": "urn:issn:2045-2322:vol:14:issue:1", "zotero_rdf_article": "    <bib:Article rdf:about=\"https://doi.org/10.1038/s41598-024-69698-5\">\n        <z:itemType>journalArticle</z:itemType>\n        <dcterms:isPartOf rdf:resource=\"urn:issn:2045-2322:vol:14:issue:1\"/>\n        <bib:authors>\n            <rdf:Seq>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Park</foaf:surname>\n                        <foaf:givenName>YeongHyeon</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Kang</foaf:surname>\n                        <foaf:givenName>Sungho</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Kim</foaf:surname>\n                        <foaf:givenName>Myung Jin</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Lee</foaf:surname>\n                        <foaf:givenName>Yeonho</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Kim</foaf:surname>\n                        <foaf:givenName>Hyeong Seok</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Yi</foaf:surname>\n                        <foaf:givenName>Juneho</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n            </rdf:Seq>\n        </bib:authors>\n        <dc:title>Visual defect obfuscation based self-supervised anomaly detection</dc:title>\n        <dc:date>2024-08-14</dc:date>\n        <z:libraryCatalog>Crossref</z:libraryCatalog>\n        <dc:identifier>\n            <dcterms:URI>\n                <rdf:value>https://doi.org/10.1038/s41598-024-69698-5</rdf:value>\n            </dcterms:URI>\n        </dc:identifier>\n        <dc:identifier>DOI 10.1038/s41598-024-69698-5</dc:identifier>\n        <bib:pages>18872</bib:pages>\n        <z:citationKey>parkVisualDefectObfuscation2024</z:citationKey>\n    </bib:Article>", "zotero_rdf_journal": "    <bib:Journal rdf:about=\"urn:issn:2045-2322:vol:14:issue:1\">\n        <prism:volume>14</prism:volume>\n        <dc:title>Scientific Reports</dc:title>\n        <prism:number>1</prism:number>\n        <dc:identifier>ISSN 2045-2322</dc:identifier>\n    </bib:Journal>"}]}, {"id": "S002", "order": 2, "text": "Patch-level memory methods compare local test descriptors with normal training descriptors, but retaining and querying many patches creates a memory and inference burden.", "query": "Patch-level memory methods compare local test descriptors with normal training descriptors but retaining and querying many patches creates a memory and inference burden", "suggestedInsertText": "(Sheridan et al., 2023) (Darby et al., 2022)", "references": [{"title": "Local shape descriptors for neuron segmentation", "journal": "Nature Methods", "family": "Nature Portfolio", "year": "2023", "doi": "10.1038/s41592-022-01711-z", "pmid": "", "url": "https://doi.org/10.1038/s41592-022-01711-z", "doi_url": "https://doi.org/10.1038/s41592-022-01711-z", "volume": "20", "issue": "2", "start_page": "295", "end_page": "303", "issn": "1548-7091", "authors": ["Sheridan, Arlo", "Nguyen, Tri M.", "Deb, Diptodip", "Lee, Wei-Chung Allen", "Saalfeld, Stephan", "Turaga, Srinivas C.", "Manor, Uri", "Funke, Jan"], "abstract": "Abstract We present an auxiliary learning task for the problem of neuron segmentation in electron microscopy volumes. The auxiliary task consists of the prediction of local shape descriptors (LSDs), which we combine with conventional voxel-wise direct neighbor affinities for neuron boundary detection. The shape descriptors capture local statistics about the neuron to be segmented, such as diameter, elongation, and direction. On a study comparing several existing methods across various specimen, imaging techniques, and resolutions, auxiliary learning of LSDs consistently increases segmentation accuracy of affinity-based methods over a range of metrics. Furthermore, the addition of LSDs promotes affinity-based segmentation methods to be on par with the current state of the art for neuron segmentation (flood-filling networks), while being two orders of magnitudes more efficient—a critical requirement for the processing of future petabyte-sized datasets.", "type": "journal-article", "score": 28.267101, "source_query": "Patch-level memory methods compare local test descriptors with normal training descriptors but retaining and querying many patches creates a memory and inference burden", "source_catalog": "Crossref", "author_metadata_status": "complete", "author_warnings": [], "citation_marker": "(Sheridan et al., 2023)", "support_grade": "metadata-only candidate", "screening_note": "Inspect abstract/publisher page before citing this paper as support.", "enw_record": "%0 Journal Article\n%T Local shape descriptors for neuron segmentation\n%A Sheridan, Arlo\n%A Nguyen, Tri M.\n%A Deb, Diptodip\n%A Lee, Wei-Chung Allen\n%A Saalfeld, Stephan\n%A Turaga, Srinivas C.\n%A Manor, Uri\n%A Funke, Jan\n%J Nature Methods\n%V 20\n%N 2\n%P 295-303\n%D 2023\n%@ 1548-7091\n%R 10.1038/s41592-022-01711-z\n%U https://doi.org/10.1038/s41592-022-01711-z", "ris_record": "TY  - JOUR\nTI  - Local shape descriptors for neuron segmentation\nAU  - Sheridan, Arlo\nAU  - Nguyen, Tri M.\nAU  - Deb, Diptodip\nAU  - Lee, Wei-Chung Allen\nAU  - Saalfeld, Stephan\nAU  - Turaga, Srinivas C.\nAU  - Manor, Uri\nAU  - Funke, Jan\nT2  - Nature Methods\nJO  - Nature Methods\nPY  - 2023\nY1  - 2023/02/01\nVL  - 20\nIS  - 2\nSP  - 295\nEP  - 303\nDO  - 10.1038/s41592-022-01711-z\nUR  - https://doi.org/10.1038/s41592-022-01711-z\nSN  - 1548-7091\nN1  - Metadata-only candidate. Inspect abstract or publisher page before citing as support.\nER  -", "journal_resource": "urn:issn:1548-7091:vol:20:issue:2", "zotero_rdf_article": "    <bib:Article rdf:about=\"https://doi.org/10.1038/s41592-022-01711-z\">\n        <z:itemType>journalArticle</z:itemType>\n        <dcterms:isPartOf rdf:resource=\"urn:issn:1548-7091:vol:20:issue:2\"/>\n        <bib:authors>\n            <rdf:Seq>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Sheridan</foaf:surname>\n                        <foaf:givenName>Arlo</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Nguyen</foaf:surname>\n                        <foaf:givenName>Tri M.</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Deb</foaf:surname>\n                        <foaf:givenName>Diptodip</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Lee</foaf:surname>\n                        <foaf:givenName>Wei-Chung Allen</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Saalfeld</foaf:surname>\n                        <foaf:givenName>Stephan</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Turaga</foaf:surname>\n                        <foaf:givenName>Srinivas C.</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Manor</foaf:surname>\n                        <foaf:givenName>Uri</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Funke</foaf:surname>\n                        <foaf:givenName>Jan</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n            </rdf:Seq>\n        </bib:authors>\n        <dc:title>Local shape descriptors for neuron segmentation</dc:title>\n        <dc:date>2023-02-01</dc:date>\n        <z:libraryCatalog>Crossref</z:libraryCatalog>\n        <dc:identifier>\n            <dcterms:URI>\n                <rdf:value>https://doi.org/10.1038/s41592-022-01711-z</rdf:value>\n            </dcterms:URI>\n        </dc:identifier>\n        <dc:identifier>DOI 10.1038/s41592-022-01711-z</dc:identifier>\n        <bib:pages>295-303</bib:pages>\n        <z:citationKey>sheridanLocalShapeDescriptors2023</z:citationKey>\n    </bib:Article>", "zotero_rdf_journal": "    <bib:Journal rdf:about=\"urn:issn:1548-7091:vol:20:issue:2\">\n        <prism:volume>20</prism:volume>\n        <dc:title>Nature Methods</dc:title>\n        <prism:number>2</prism:number>\n        <dc:identifier>ISSN 1548-7091</dc:identifier>\n    </bib:Journal>"}, {"title": "Compressing local atomic neighbourhood descriptors", "journal": "npj Computational Materials", "family": "Nature Portfolio", "year": "2022", "doi": "10.1038/s41524-022-00847-y", "pmid": "", "url": "https://doi.org/10.1038/s41524-022-00847-y", "doi_url": "https://doi.org/10.1038/s41524-022-00847-y", "volume": "8", "issue": "1", "start_page": "166", "end_page": "", "issn": "2057-3960", "authors": ["Darby, James P.", "Kermode, James R.", "Csányi, Gábor"], "abstract": "Abstract Many atomic descriptors are currently limited by their unfavourable scaling with the number of chemical elements S e.g. the length of body-ordered descriptors, such as the SOAP power spectrum (3-body) and the (ACE) (multiple body-orders), scales as ( N S ) ν where ν + 1 is the body-order and N is the number of radial basis functions used in the density expansion. We introduce two distinct approaches which can be used to overcome this scaling for the SOAP power spectrum. Firstly, we show that the power spectrum is amenable to lossless compression with respect to both S and N , so that the descriptor length can be reduced from $${{{\\mathcal{O}}}}({N}^{2}{S}^{2})$$ O ( N 2 S 2 ) to $${{{\\mathcal{O}}}}\\left(NS\\right)$$ O N S . Secondly, we introduce a generalised SOAP kernel, where compression is achieved through the use of the total, element agnostic density, in combination with radial projection. The ideas used in the generalised kernel are equally applicably to any other body-ordered descriptors and we demonstrate this for the (ACSF).", "type": "journal-article", "score": 27.277885, "source_query": "Patch-level memory methods compare local test descriptors with normal training descriptors but retaining and querying many patches creates a memory and inference burden", "source_catalog": "Crossref", "author_metadata_status": "complete", "author_warnings": [], "citation_marker": "(Darby et al., 2022)", "support_grade": "metadata-only candidate", "screening_note": "Inspect abstract/publisher page before citing this paper as support.", "enw_record": "%0 Journal Article\n%T Compressing local atomic neighbourhood descriptors\n%A Darby, James P.\n%A Kermode, James R.\n%A Csányi, Gábor\n%J npj Computational Materials\n%V 8\n%N 1\n%P 166\n%D 2022\n%@ 2057-3960\n%R 10.1038/s41524-022-00847-y\n%U https://doi.org/10.1038/s41524-022-00847-y", "ris_record": "TY  - JOUR\nTI  - Compressing local atomic neighbourhood descriptors\nAU  - Darby, James P.\nAU  - Kermode, James R.\nAU  - Csányi, Gábor\nT2  - npj Computational Materials\nJO  - npj Computational Materials\nPY  - 2022\nY1  - 2022/08/11\nVL  - 8\nIS  - 1\nSP  - 166\nDO  - 10.1038/s41524-022-00847-y\nUR  - https://doi.org/10.1038/s41524-022-00847-y\nSN  - 2057-3960\nN1  - Metadata-only candidate. Inspect abstract or publisher page before citing as support.\nER  -", "journal_resource": "urn:issn:2057-3960:vol:8:issue:1", "zotero_rdf_article": "    <bib:Article rdf:about=\"https://doi.org/10.1038/s41524-022-00847-y\">\n        <z:itemType>journalArticle</z:itemType>\n        <dcterms:isPartOf rdf:resource=\"urn:issn:2057-3960:vol:8:issue:1\"/>\n        <bib:authors>\n            <rdf:Seq>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Darby</foaf:surname>\n                        <foaf:givenName>James P.</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Kermode</foaf:surname>\n                        <foaf:givenName>James R.</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Csányi</foaf:surname>\n                        <foaf:givenName>Gábor</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n            </rdf:Seq>\n        </bib:authors>\n        <dc:title>Compressing local atomic neighbourhood descriptors</dc:title>\n        <dc:date>2022-08-11</dc:date>\n        <z:libraryCatalog>Crossref</z:libraryCatalog>\n        <dc:identifier>\n            <dcterms:URI>\n                <rdf:value>https://doi.org/10.1038/s41524-022-00847-y</rdf:value>\n            </dcterms:URI>\n        </dc:identifier>\n        <dc:identifier>DOI 10.1038/s41524-022-00847-y</dc:identifier>\n        <bib:pages>166</bib:pages>\n        <z:citationKey>darbyCompressingLocalAtomic2022</z:citationKey>\n    </bib:Article>", "zotero_rdf_journal": "    <bib:Journal rdf:about=\"urn:issn:2057-3960:vol:8:issue:1\">\n        <prism:volume>8</prism:volume>\n        <dc:title>npj Computational Materials</dc:title>\n        <prism:number>1</prism:number>\n        <dc:identifier>ISSN 2057-3960</dc:identifier>\n    </bib:Journal>"}]}, {"id": "S003", "order": 3, "text": "Recent industrial anomaly detection research includes millisecond-level inference, high-resolution tiled processing, and vision-language or prompt-based anomaly detection.", "query": "Recent industrial anomaly detection research includes millisecond-level inference high-resolution tiled processing and vision-language or prompt-based anomaly detection", "suggestedInsertText": "", "references": []}, {"id": "S004", "order": 4, "text": "Real-world industrial benchmarks can contain weakly contrasted defects and imaging variation that are not represented by standard laboratory benchmarks.", "query": "Real-world industrial benchmarks can contain weakly contrasted defects and imaging variation that are not represented by standard laboratory benchmarks", "suggestedInsertText": "(Azad et al., 2026)", "references": [{"title": "Principles to guide clinical AI readiness and move from benchmarks to real-world evaluation", "journal": "Nature Medicine", "family": "Nature Portfolio", "year": "2026", "doi": "10.1038/s41591-025-04198-1", "pmid": "", "url": "https://doi.org/10.1038/s41591-025-04198-1", "doi_url": "https://doi.org/10.1038/s41591-025-04198-1", "volume": "32", "issue": "3", "start_page": "802", "end_page": "804", "issn": "1078-8956", "authors": ["Azad, Tej D.", "Krumholz, Harlan M.", "Saria, Suchi"], "abstract": "", "type": "journal-article", "score": 28.840378, "source_query": "Real-world industrial benchmarks can contain weakly contrasted defects and imaging variation that are not represented by standard laboratory benchmarks", "source_catalog": "Crossref", "author_metadata_status": "complete", "author_warnings": [], "citation_marker": "(Azad et al., 2026)", "support_grade": "metadata-only candidate", "screening_note": "Inspect abstract/publisher page before citing this paper as support.", "enw_record": "%0 Journal Article\n%T Principles to guide clinical AI readiness and move from benchmarks to real-world evaluation\n%A Azad, Tej D.\n%A Krumholz, Harlan M.\n%A Saria, Suchi\n%J Nature Medicine\n%V 32\n%N 3\n%P 802-804\n%D 2026\n%@ 1078-8956\n%R 10.1038/s41591-025-04198-1\n%U https://doi.org/10.1038/s41591-025-04198-1", "ris_record": "TY  - JOUR\nTI  - Principles to guide clinical AI readiness and move from benchmarks to real-world evaluation\nAU  - Azad, Tej D.\nAU  - Krumholz, Harlan M.\nAU  - Saria, Suchi\nT2  - Nature Medicine\nJO  - Nature Medicine\nPY  - 2026\nY1  - 2026/03/01\nVL  - 32\nIS  - 3\nSP  - 802\nEP  - 804\nDO  - 10.1038/s41591-025-04198-1\nUR  - https://doi.org/10.1038/s41591-025-04198-1\nSN  - 1078-8956\nN1  - Metadata-only candidate. Inspect abstract or publisher page before citing as support.\nER  -", "journal_resource": "urn:issn:1078-8956:vol:32:issue:3", "zotero_rdf_article": "    <bib:Article rdf:about=\"https://doi.org/10.1038/s41591-025-04198-1\">\n        <z:itemType>journalArticle</z:itemType>\n        <dcterms:isPartOf rdf:resource=\"urn:issn:1078-8956:vol:32:issue:3\"/>\n        <bib:authors>\n            <rdf:Seq>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Azad</foaf:surname>\n                        <foaf:givenName>Tej D.</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Krumholz</foaf:surname>\n                        <foaf:givenName>Harlan M.</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Saria</foaf:surname>\n                        <foaf:givenName>Suchi</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n            </rdf:Seq>\n        </bib:authors>\n        <dc:title>Principles to guide clinical AI readiness and move from benchmarks to real-world evaluation</dc:title>\n        <dc:date>2026-03-01</dc:date>\n        <z:libraryCatalog>Crossref</z:libraryCatalog>\n        <dc:identifier>\n            <dcterms:URI>\n                <rdf:value>https://doi.org/10.1038/s41591-025-04198-1</rdf:value>\n            </dcterms:URI>\n        </dc:identifier>\n        <dc:identifier>DOI 10.1038/s41591-025-04198-1</dc:identifier>\n        <bib:pages>802-804</bib:pages>\n        <z:citationKey>azadPrinciplesToGuide2026</z:citationKey>\n    </bib:Article>", "zotero_rdf_journal": "    <bib:Journal rdf:about=\"urn:issn:1078-8956:vol:32:issue:3\">\n        <prism:volume>32</prism:volume>\n        <dc:title>Nature Medicine</dc:title>\n        <prism:number>3</prism:number>\n        <dc:identifier>ISSN 1078-8956</dc:identifier>\n    </bib:Journal>"}]}, {"id": "S005", "order": 5, "text": "Selective routing should be evaluated with a matched compute budget so that selection quality is separated from the number of expensive evaluations.", "query": "Selective routing should be evaluated with a matched compute budget so that selection quality is separated from the number of expensive evaluations", "suggestedInsertText": "(Boucret et al., 2025)", "references": [{"title": "Deep-learning model for embryo selection using time-lapse imaging of matched high-quality embryos", "journal": "Scientific Reports", "family": "Nature Portfolio", "year": "2025", "doi": "10.1038/s41598-025-10531-y", "pmid": "", "url": "https://doi.org/10.1038/s41598-025-10531-y", "doi_url": "https://doi.org/10.1038/s41598-025-10531-y", "volume": "15", "issue": "1", "start_page": "28068", "end_page": "", "issn": "2045-2322", "authors": ["Boucret, Lisa", "Chabrun, Floris", "Boguenet, Magalie", "Reynier, Pascal", "Bouet, Pierre-Emmanuel", "May-Panloup, Pascale"], "abstract": "", "type": "journal-article", "score": 17.589725, "source_query": "Selective routing should be evaluated with a matched compute budget so that selection quality is separated from the number of expensive evaluations", "source_catalog": "Crossref", "author_metadata_status": "complete", "author_warnings": [], "citation_marker": "(Boucret et al., 2025)", "support_grade": "metadata-only candidate", "screening_note": "Inspect abstract/publisher page before citing this paper as support.", "enw_record": "%0 Journal Article\n%T Deep-learning model for embryo selection using time-lapse imaging of matched high-quality embryos\n%A Boucret, Lisa\n%A Chabrun, Floris\n%A Boguenet, Magalie\n%A Reynier, Pascal\n%A Bouet, Pierre-Emmanuel\n%A May-Panloup, Pascale\n%J Scientific Reports\n%V 15\n%N 1\n%P 28068\n%D 2025\n%@ 2045-2322\n%R 10.1038/s41598-025-10531-y\n%U https://doi.org/10.1038/s41598-025-10531-y", "ris_record": "TY  - JOUR\nTI  - Deep-learning model for embryo selection using time-lapse imaging of matched high-quality embryos\nAU  - Boucret, Lisa\nAU  - Chabrun, Floris\nAU  - Boguenet, Magalie\nAU  - Reynier, Pascal\nAU  - Bouet, Pierre-Emmanuel\nAU  - May-Panloup, Pascale\nT2  - Scientific Reports\nJO  - Scientific Reports\nPY  - 2025\nY1  - 2025/08/01\nVL  - 15\nIS  - 1\nSP  - 28068\nDO  - 10.1038/s41598-025-10531-y\nUR  - https://doi.org/10.1038/s41598-025-10531-y\nSN  - 2045-2322\nN1  - Metadata-only candidate. Inspect abstract or publisher page before citing as support.\nER  -", "journal_resource": "urn:issn:2045-2322:vol:15:issue:1", "zotero_rdf_article": "    <bib:Article rdf:about=\"https://doi.org/10.1038/s41598-025-10531-y\">\n        <z:itemType>journalArticle</z:itemType>\n        <dcterms:isPartOf rdf:resource=\"urn:issn:2045-2322:vol:15:issue:1\"/>\n        <bib:authors>\n            <rdf:Seq>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Boucret</foaf:surname>\n                        <foaf:givenName>Lisa</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Chabrun</foaf:surname>\n                        <foaf:givenName>Floris</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Boguenet</foaf:surname>\n                        <foaf:givenName>Magalie</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Reynier</foaf:surname>\n                        <foaf:givenName>Pascal</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>Bouet</foaf:surname>\n                        <foaf:givenName>Pierre-Emmanuel</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n                <rdf:li>\n                    <foaf:Person>\n                        <foaf:surname>May-Panloup</foaf:surname>\n                        <foaf:givenName>Pascale</foaf:givenName>\n                    </foaf:Person>\n                </rdf:li>\n            </rdf:Seq>\n        </bib:authors>\n        <dc:title>Deep-learning model for embryo selection using time-lapse imaging of matched high-quality embryos</dc:title>\n        <dc:date>2025-08-01</dc:date>\n        <z:libraryCatalog>Crossref</z:libraryCatalog>\n        <dc:identifier>\n            <dcterms:URI>\n                <rdf:value>https://doi.org/10.1038/s41598-025-10531-y</rdf:value>\n            </dcterms:URI>\n        </dc:identifier>\n        <dc:identifier>DOI 10.1038/s41598-025-10531-y</dc:identifier>\n        <bib:pages>28068</bib:pages>\n        <z:citationKey>boucretDeepLearningModel2025</z:citationKey>\n    </bib:Article>", "zotero_rdf_journal": "    <bib:Journal rdf:about=\"urn:issn:2045-2322:vol:15:issue:1\">\n        <prism:volume>15</prism:volume>\n        <dc:title>Scientific Reports</dc:title>\n        <prism:number>1</prism:number>\n        <dc:identifier>ISSN 2045-2322</dc:identifier>\n    </bib:Journal>"}]}]}</script>
+  <script>
+    const data = JSON.parse(document.getElementById('citationData').textContent);
+    const modal = document.getElementById('summaryModal');
+    const closeSummary = document.getElementById('closeSummary');
+    const openSummary = document.getElementById('openSummary');
+    const yearFromInput = document.getElementById('yearFrom');
+    const yearToInput = document.getElementById('yearTo');
+    const queryFilterInput = document.getElementById('queryFilter');
+    const selectedOnlyInput = document.getElementById('selectedOnly');
+    const applyFiltersButton = document.getElementById('applyFilters');
+    const clearFiltersButton = document.getElementById('clearFilters');
+    const visibleCount = document.getElementById('visibleCount');
+    const selectedCount = document.getElementById('selectedCount');
+    const selectionList = document.getElementById('selectionList');
+    const selectionEmpty = document.getElementById('selectionEmpty');
+    const downloadSelected = document.getElementById('downloadSelected');
+    const downloadFormat = document.getElementById('downloadFormat');
+    const selectedMap = new Map();
+    let currentDownloadUrl = null;
+
+    downloadFormat.value = data.defaultExportFormat || 'ris';
+
+    function showModal() {
+      if (modal) {
+        modal.classList.remove('is-hidden');
+        modal.setAttribute('aria-hidden', 'false');
+      }
+    }
+    function hideModal() {
+      if (modal) {
+        modal.classList.add('is-hidden');
+        modal.setAttribute('aria-hidden', 'true');
+      }
+    }
+    window.addEventListener('DOMContentLoaded', showModal);
+    openSummary.addEventListener('click', showModal);
+    closeSummary.addEventListener('click', hideModal);
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) {
+        hideModal();
+      }
+    });
+
+    function revokeDownloadUrl() {
+      if (currentDownloadUrl) {
+        URL.revokeObjectURL(currentDownloadUrl);
+        currentDownloadUrl = null;
+      }
+    }
+
+    function selectedItems() {
+      return Array.from(selectedMap.values());
+    }
+
+    function exportItems() {
+      const items = selectedItems();
+      return items.length ? items : (data.references || []);
+    }
+
+    function buildEnw(items) {
+      return items.map((item) => item.enw_record).join('\n\n');
+    }
+
+    function buildRis(items) {
+      return items.map((item) => item.ris_record).join('\n\n');
+    }
+
+    function buildZoteroRdf(items) {
+      const journals = new Map();
+      const articles = [];
+      for (const item of items) {
+        if (item.zotero_rdf_article) {
+          articles.push(item.zotero_rdf_article);
+        }
+        if (item.journal_resource && item.zotero_rdf_journal && !journals.has(item.journal_resource)) {
+          journals.set(item.journal_resource, item.zotero_rdf_journal);
+        }
+      }
+      const header = [
+        '<rdf:RDF',
+        ' xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"',
+        ' xmlns:z="http://www.zotero.org/namespaces/export#"',
+        ' xmlns:dcterms="http://purl.org/dc/terms/"',
+        ' xmlns:bib="http://purl.org/net/biblio#"',
+        ' xmlns:foaf="http://xmlns.com/foaf/0.1/"',
+        ' xmlns:dc="http://purl.org/dc/elements/1.1/"',
+        ' xmlns:prism="http://prismstandard.org/namespaces/1.2/basic/"',
+        '>',
+      ].join('');
+      return [header, ...articles, ...journals.values(), '</rdf:RDF>'].join('\n');
+    }
+
+    function exportFileName(format, hasSelection) {
+      const base = hasSelection ? 'selected-references' : 'all-references';
+      if (format === 'ris') return `${base}.ris`;
+      if (format === 'zotero-rdf') return `${base}.rdf`;
+      return `${base}.enw`;
+    }
+
+    function updateDownloadLink() {
+      const items = exportItems();
+      const format = downloadFormat.value || 'enw';
+      const hasSelection = selectedItems().length > 0;
+      let content = '';
+      if (format === 'ris') {
+        content = buildRis(items);
+      } else if (format === 'zotero-rdf') {
+        content = buildZoteroRdf(items);
+      } else {
+        content = buildEnw(items);
+      }
+      revokeDownloadUrl();
+      currentDownloadUrl = URL.createObjectURL(new Blob([content], { type: 'text/plain;charset=utf-8' }));
+      downloadSelected.href = currentDownloadUrl;
+      downloadSelected.download = exportFileName(format, hasSelection);
+    }
+
+    function updateSelectedPanel() {
+      selectionList.innerHTML = '';
+      const items = selectedItems();
+      selectedCount.textContent = String(items.length);
+      if (!items.length) {
+        selectionEmpty.classList.remove('hidden');
+      } else {
+        selectionEmpty.classList.add('hidden');
+      }
+      for (const item of items) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'selection-item';
+        wrapper.innerHTML = `<h4>${item.title}</h4><p>${item.journal} · ${item.year || 'n.d.'}</p>`;
+        selectionList.appendChild(wrapper);
+      }
+      updateDownloadLink();
+    }
+
+    function yearPass(year) {
+      const fromYear = Number(yearFromInput.value || 0);
+      const toYear = Number(yearToInput.value || 0);
+      const y = Number(year || 0);
+      if (fromYear && (!y || y < fromYear)) return false;
+      if (toYear && (!y || y > toYear)) return false;
+      return true;
+    }
+
+    function queryPass(text) {
+      const needle = queryFilterInput.value.trim().toLowerCase();
+      if (!needle) return true;
+      return text.toLowerCase().includes(needle);
+    }
+
+    function applyFilters() {
+      let totalVisible = 0;
+      document.querySelectorAll('.segment-card').forEach((card) => {
+        let visibleRefs = 0;
+        card.querySelectorAll('.reference').forEach((ref) => {
+          const title = ref.dataset.title || '';
+          const journal = ref.dataset.journal || '';
+          const doi = ref.dataset.doi || '';
+          const authors = ref.dataset.authors || '';
+          const segmentText = ref.dataset.segment || '';
+          const year = ref.dataset.year || '';
+          const key = ref.dataset.key || '';
+          const searchText = `${title} ${journal} ${doi} ${authors} ${segmentText}`;
+          const matches = yearPass(year) && queryPass(searchText) && (!selectedOnlyInput.checked || selectedMap.has(key));
+          ref.classList.toggle('hidden', !matches);
+          if (matches) visibleRefs += 1;
+        });
+        const noRefsMessage = card.querySelector('.empty');
+        if (noRefsMessage) {
+          const matches = !selectedOnlyInput.checked && queryPass(card.dataset.segment || '');
+          noRefsMessage.classList.toggle('hidden', !matches);
+          card.classList.toggle('hidden', !matches);
+          if (matches) totalVisible += 1;
+          return;
+        }
+        card.classList.toggle('hidden', visibleRefs === 0);
+        totalVisible += visibleRefs;
+      });
+      visibleCount.textContent = String(totalVisible);
+    }
+
+    document.querySelectorAll('.reference').forEach((ref) => {
+      const checkbox = ref.querySelector('input[type="checkbox"]');
+      checkbox.addEventListener('change', () => {
+        const key = ref.dataset.key;
+        const record = JSON.parse(ref.dataset.record);
+        if (checkbox.checked) {
+          selectedMap.set(key, record);
+        } else {
+          selectedMap.delete(key);
+        }
+        updateSelectedPanel();
+        applyFilters();
+      });
+    });
+
+    applyFiltersButton.addEventListener('click', applyFilters);
+    downloadFormat.addEventListener('change', updateDownloadLink);
+    clearFiltersButton.addEventListener('click', () => {
+      yearFromInput.value = '';
+      yearToInput.value = '';
+      queryFilterInput.value = '';
+      selectedOnlyInput.checked = false;
+      applyFilters();
+    });
+    queryFilterInput.addEventListener('input', applyFilters);
+    selectedOnlyInput.addEventListener('change', applyFilters);
+    yearFromInput.addEventListener('change', applyFilters);
+    yearToInput.addEventListener('change', applyFilters);
+    updateSelectedPanel();
+    applyFilters();
+  </script>
+</body>
+</html>

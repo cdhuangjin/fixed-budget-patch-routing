@@ -1,0 +1,25 @@
+{
+  "n_units": 45,
+  "fallback_counts_match_all": true,
+  "risk_random_fallback_counts_match_all": true,
+  "risk_vs_random": {
+    "auroc": {
+      "estimate": 0.08787228659723706,
+      "ci_low": 0.06762772428680885,
+      "ci_high": 0.10810369433934855,
+      "positive_units": 35,
+      "n_units": 45,
+      "reps": 10000,
+      "seed": 17
+    },
+    "recall_at_fpr": {
+      "estimate": 0.10472405393355648,
+      "ci_low": 0.07542127288743289,
+      "ci_high": 0.1337446795555985,
+      "positive_units": 36,
+      "n_units": 45,
+      "reps": 10000,
+      "seed": 17
+    }
+  }
+}

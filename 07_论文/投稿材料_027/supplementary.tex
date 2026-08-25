@@ -1,0 +1,68 @@
+\documentclass[pdflatex,sn-vancouver-num]{sn-jnl}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\begin{document}
+
+\title[Supplementary Information]{Supplementary Information: Fixed-Budget Local-Patch Risk Routing for Industrial Anomaly Detection}
+\author*[1]{\fnm{Jin} \sur{Huang}}\email{614938561@qq.com\\ORCID: \href{https://orcid.org/0009-0005-7489-2018}{0009-0005-7489-2018}}
+\author[2]{\fnm{Qisen} \sur{Gao}}\email{1350728839@qq.com}
+\affil*[1]{\orgname{Guangxi Vocational Normal University}, \orgaddress{\city{Nanning}, \postcode{530007}, \state{Guangxi Zhuang Autonomous Region}, \country{China}}}
+\affil[2]{\orgname{Gansu University of Political Science and Law}, \orgaddress{\city{Lanzhou}, \postcode{730070}, \state{Gansu}, \country{China}}}
+
+\maketitle
+
+\section{Purpose and scope}
+This supplement records the unit definitions, paired resampling protocol, controlled baselines, failure cases, online-controller diagnostics, and latency measurement details supporting the main manuscript. All numerical values are from the strict matched-random evaluation unless explicitly labelled as an online or diagnostic result.
+
+\section{Evaluation units and uncertainty}
+An evaluation unit is one dataset category--random seed pair. The primary matched comparisons use 45 units for MVTec AD (15 categories $\times$ 3 seeds), 18 units for MPDD (6 $\times$ 3), and 36 units for VisA (12 $\times$ 3). For every unit, the local-routing score and the matched random-selection score are computed with the same feature extractor, candidate patches, budget, seed, and downstream scoring rule. Reported effects are local minus matched-random values. Confidence intervals are percentile intervals from 10,000 paired bootstrap resamples of evaluation units. The sign-count column reports the number of units with a positive effect.
+
+\begin{table}[ht]
+\caption{Primary paired effects.}
+\label{tab:primary}
+\begin{tabularx}{\textwidth}{lrrrrrr}
+\toprule
+Dataset & $n$ & AUROC $\Delta$ & 95\% CI & $+$ units & Recall $\Delta$ & 95\% CI \\
+\midrule
+MVTec AD & 45 & 0.0783 & [0.0525, 0.1029] & 35/45 & 0.1848 & [0.1192, 0.2491] \\
+MPDD & 18 & 0.1013 & [0.0593, 0.1448] & 15/18 & 0.2074 & [0.1208, 0.3001] \\
+VisA & 36 & 0.0124 & [0.0079, 0.0166] & 29/36 & 0.2283 & [0.1483, 0.3056] \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Budget sensitivity}
+The budget sensitivity analysis was performed on the 45 MVTec units. The local route receives the same feature and candidate-patch pool at each budget; only the retained local-patch fraction changes. These values describe quality relative to matched random routing and should not be interpreted as an end-to-end speedup.
+
+\begin{table}[ht]
+\caption{MVTec effect under three local-patch budgets.}
+\label{tab:budget}
+\begin{tabularx}{\textwidth}{lrrrr}
+\toprule
+Budget & AUROC $\Delta$ & Recall@5\%FPR $\Delta$ & $n$ & Interpretation \\
+\midrule
+10\% & 0.0511 & 0.2853 & 45 & More selective; stronger recall gain \\
+25\% & 0.0783 & 0.1848 & 45 & Primary operating point \\
+50\% & 0.1122 & 0.1615 & 45 & Less selective; higher retained workload \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Baseline and absolute-score context}
+On the 45 MVTec units, the full detector obtains AUROC 0.9390. At the primary 25\% local budget, the strict local route obtains AUROC 0.7758 and the matched-random route 0.6975. These absolute values are not presented as superiority over the full detector; they establish that the contribution is allocation quality at a fixed reduced local budget. A PaDiM-style baseline obtains AUROC 0.8982 and Recall@5\%FPR 0.6544. A controlled PatchCore-like patch-level farthest-point coreset detector obtains AUROC 0.9433 and Recall@5\%FPR 0.7847. The latter is an implementation-controlled approximation, not a claim of exact parity with the official PatchCore release.
+
+\section{Failure cases and boundary conditions}
+Three checks were retained as negative evidence. First, a multi-scale rank-fusion variant underperformed matched random routing in a three-category smoke test, indicating that additional ranking signals can miscalibrate the budget allocation. Second, a lightweight cost filter underperformed the stronger patch-level coreset baseline. Third, the conformal-threshold diagnostic produced a realized fallback rate of 54.9\% for a nominal 25\% target and is therefore not used as a budget guarantee. These tests motivate the conservative claim that routing improves selection quality under a fixed experimental budget, not that every controller or every online policy is robust.
+
+\section{Online-prefix sensitivity}
+The online prefix controller was evaluated separately because it introduces a temporal prefix and fallback policy. On the 45 MVTec units, realized fallback was 25.34\%, with AUROC effect 0.0331 (95\% CI [0.0045, 0.0601]) and Recall effect 0.0804 (95\% CI [0.0211, 0.1346]). The same controller produced AUROC/Recall effects of 0.0890/0.0643 on MPDD seed 17 and 0.00004/$-0.0408$ on VisA seed 17. With a VisA buffer of 128, the effects were 0.00124 (95\% CI [$-0.00113$, 0.00339]) and 0.0750 (95\% CI [0.0189, 0.1317]). These results are why online generalization is reported as configuration-sensitive rather than as a universal improvement.
+
+\section{Latency measurement}
+Latency was measured on the same machine with warm-up excluded from the reported percentile. The local probe P95 was 3.127 ms, the full probe P95 was 4.714 ms, and the sequential mixed path P95 was 7.135 ms. The sequential mixed path includes both local and full operations and is a boundary diagnostic; it is not an end-to-end deployment benchmark. Batch throughput checks were limited to three categories and are treated as an extension rather than a primary claim.
+
+\section{Reproducibility record}
+The final submission package should include the exact commit identifier, environment lock file, dataset version and license notes, random seeds, category lists, budget values, and the script that regenerates Tables 1--2 and Figures 1--3. The public repository URL is intentionally left as an author action item until the authors select and publish the repository. No private path is presented as a reproducibility link.
+
+\end{document}

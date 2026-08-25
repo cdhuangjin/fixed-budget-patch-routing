@@ -1,0 +1,16 @@
+figure,method,target_budget,auroc,recall,p50_ms,p95_ms,estimate,ci_low,ci_high
+main,Fast,,0.786,0.4575,,,,,
+main,Random,,0.7796,0.6204,,,,,
+main,Risk,,0.8674,0.7251,,,,,
+main,Full,,0.939,0.7852,,,,,
+budget,Random,10,0.7379,0.5222,,,,,
+budget,Risk,10,0.8322,0.6404,,,,,
+budget,Random,25,0.7889,0.6396,,,,,
+budget,Risk,25,0.8652,0.7269,,,,,
+budget,Random,40,0.8264,0.7035,,,,,
+budget,Risk,40,0.8886,0.7512,,,,,
+latency,Fast,,,,2.44,7.35,,,
+latency,Full,,,,4.09,10.52,,,
+latency,Risk,,,,5.85,16.47,,,
+uncertainty,AUROC delta,,,,0.0878722866,,0.0878722866,0.0676277243,0.1081036943
+uncertainty,Recall delta,,,,0.1047240539,,0.1047240539,0.0754212729,0.1337446796

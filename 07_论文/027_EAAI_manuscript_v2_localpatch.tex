@@ -1,0 +1,138 @@
+\documentclass[preprint,12pt]{elsarticle}
+
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage{graphicx}
+
+\journal{Engineering Applications of Artificial Intelligence}
+
+\begin{document}
+\begin{frontmatter}
+
+\title{Strict-Budget Local-Patch Risk Probing for Industrial Anomaly Detection}
+
+\author[guangxi]{Jin Huang\corref{cor1}}
+\ead{614938561@qq.com}
+\ead[url]{https://orcid.org/0009-0005-7489-2018}
+\author[shangqiu]{Yubo Zhou}
+\ead{surpass5837@163.com}
+\cortext[cor1]{Corresponding author.}
+
+\affiliation[guangxi]{organization={Guangxi Vocational Normal University},city={Nanning},postcode={530000},state={Guangxi},country={China}}
+\affiliation[shangqiu]{organization={Shangqiu University},addressline={66 Beihai East Road, Liangyuan District},city={Shangqiu},postcode={476000},state={Henan},country={China}}
+
+\begin{abstract}
+Selective inference can reduce the number of expensive local anomaly evaluations, but a risk score is useful only if it changes the ranking of samples that receive the extra computation. We study a strict-budget local-patch risk probe for industrial anomaly detection. A low-cost ResNet-18 layer-2 local descriptor is used to rank test images, and exactly a prescribed fraction is escalated to a higher-cost layer-3 patch-memory detector. The control escalates the same number of images by matched random sampling, so the comparison isolates route quality from computation quantity. Across 15 MVTec AD categories and three seeds (45 category--seed units), the 25\% local-patch route improved image-level AUROC over matched random escalation by 0.0783 (95\% bootstrap CI, 0.0525--0.1029) and Recall@5\%FPR by 0.1848 (CI, 0.1192--0.2491). The effect generalized to MPDD (AUROC difference 0.1013, CI 0.0593--0.1448) and VisA (0.0124, CI 0.0079--0.0166), for a total of 99 category--seed units. A MVTec budget sweep showed positive AUROC differences at 10\% (+0.0560) and 50\% (+0.1134) budgets. In a synchronized batch-one CUDA audit, the local probe itself had a P95 latency of 3.127 ms, whereas the sequential probe-plus-full path had a P95 of 7.135 ms versus 4.714 ms for the full detector. The evidence therefore supports strict-budget quality improvement over random escalation, not end-to-end latency acceleration or superiority over the full detector.
+\end{abstract}
+
+\begin{highlights}
+\item A local-patch risk probe ranks samples before expensive anomaly analysis.
+\item Matched random controls use exactly the same fallback count at every category and seed.
+\item The 25\% route improves AUROC across 99 category--seed units on three industrial datasets.
+\item Budget sensitivity is positive at 10\%, 25\% and 50\% MVTec fallback budgets.
+\item The sequential implementation improves budget allocation but not single-sample P95 latency.
+\end{highlights}
+
+\begin{keyword}
+industrial anomaly detection \sep selective inference \sep local patch memory \sep resource-aware inference \sep MVTec AD
+\end{keyword}
+\end{frontmatter}
+
+\section{Introduction}
+Industrial inspection systems often process many normal images while only a minority require detailed local analysis. Running a high-resolution patch-memory detector on every image provides a strong accuracy reference but spends the same cost on easy and difficult inputs. A selective system should instead allocate the expensive path according to an input-dependent signal. The central methodological issue is that a nominal budget does not by itself prove useful selection: a route can appear better simply because it escalates more samples, or because the calibration distribution does not match the test distribution.
+
+We investigate a strict-budget local-patch risk probe. The probe extracts a low-resolution layer-2 feature map, computes a local nearest-neighbour risk score against normal patches, and ranks the test images without using test labels. Exactly $\lceil bN\rceil$ of $N$ test images are escalated to a higher-resolution layer-3 patch-memory detector. The matched random control escalates exactly the same number of images without using the risk score. This design changes only the allocation rule while holding the fallback count fixed.
+
+The contribution is intentionally bounded. The method is a routing mechanism around an existing memory-based detector, not a new backbone or a replacement for the full detector. The main claim is that local-patch risk ranking improves the quality of a fixed computational allocation over random allocation. We do not claim that the selective path surpasses the full detector or reduces sequential single-sample P95 latency.
+
+\section{Method}
+\subsection{Two-stage detector}
+Let $f_s$ denote a fast feature extractor and $f_f$ a full local feature extractor. The fast path resizes an image to $128\times128$ pixels and extracts the ResNet-18 stem, layer 1 and layer 2. Global descriptors are obtained by spatial averaging and $L_2$ normalisation. The full path resizes to $224\times224$ pixels and continues through layer 3; its spatial descriptors are normalised per patch. Normal training images form the corresponding memory banks.
+
+For a query image $x$, the local probe retains the layer-2 spatial descriptors $\{q_i(x)\}$. Its risk score is the mean of the largest 5\% of patch-to-normal-bank nearest-neighbour distances,
+\begin{equation}
+ r(x)=\operatorname{MeanTop}_{5\%}\left(\left\{\min_{m\in\mathcal{M}_2}\|q_i(x)-m\|_2\right\}_i\right).
+\end{equation}
+The route selects the largest $\lceil bN\rceil$ risk scores. Selected samples receive the full layer-3 patch-memory score; unselected samples retain the fast score. No test labels are used for ranking or selection.
+
+\subsection{Matched random control and statistical unit}
+For every category, seed and budget, the random control samples without replacement exactly $\lceil bN\rceil$ test indices and replaces their fast scores with the corresponding full scores. The primary statistical unit is a category--seed pair, not an individual timing repetition or image. Paired bootstrap confidence intervals resample category--seed units with replacement.
+
+\section{Experimental setup}
+We use MVTec AD (15 categories), MPDD (6 categories) and VisA (12 categories). Training uses only normal images. For the main 25\% budget, seeds 17, 29 and 41 produce 45 MVTec, 18 MPDD and 36 VisA category--seed units. Image-level AUROC and Recall@5\%FPR are reported. The MVTec 10\% and 50\% budget sweep uses all 15 categories at seed 17 as a descriptive sensitivity analysis; the 25\% point remains the only budget with three-seed pooled inference.
+
+The full detector is an accuracy reference, not a matched-budget competitor. A strict latency audit measures batch-one CUDA inference with explicit synchronisation, one warm-up and 30 repetitions per cached image. The local probe, full detector and sequential probe-plus-full route are reported separately. Timing repetitions are not treated as independent statistical samples.
+
+\section{Results}
+\subsection{Strict-budget performance}
+Table~\ref{tab:cross} summarises the primary matched comparisons. At the 25\% budget, the local-patch route improved AUROC and low-FPR recall on all three datasets in pooled category--seed analyses. The MVTec confidence intervals exclude zero by a substantial margin; the MPDD effect is larger but is based on fewer categories; VisA shows a smaller but consistent AUROC effect and a larger recall effect.
+
+\begin{table}[t]
+\centering
+\caption{Local-patch route minus matched-random route at a strict 25\% fallback budget. Values are pooled paired differences over category--seed units.}
+\label{tab:cross}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lccccc}
+\toprule
+Dataset & Units & AUROC difference & 95\% CI & Recall difference & Positive AUROC units\\
+\midrule
+MVTec AD & 45 & +0.0783 & [0.0525, 0.1029] & +0.1848 & 35/45\\
+MPDD & 18 & +0.1013 & [0.0593, 0.1448] & +0.2074 & 15/18\\
+VisA & 36 & +0.0124 & [0.0079, 0.0166] & +0.2283 & 29/36\\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+The full MVTec detector remains the accuracy reference, with pooled image-level AUROC 0.9390, whereas the strict 25\% local-patch route averages 0.7758 and matched random averages 0.6975. Thus the result is a selection advantage at fixed budget, rather than absolute accuracy superiority.
+
+As a protocol-aligned detector reference, a diagonal-Gaussian PaDiM-style model using the same layer-3 patch features achieved pooled AUROC 0.8982 and Recall@5\%FPR 0.6544 over the same 45 category--seed units. This reference is stronger than the selective route in absolute accuracy, as expected for a full-budget detector, and confirms that the present contribution concerns allocation of expensive analysis rather than a new anomaly-scoring backbone.
+
+We also evaluated a controlled 10\% image-level farthest-point coreset, retaining all patches from selected normal images. Its Full-Coreset AUROC was 0.9082. Under the same 25\% fallback budget, local-patch routing improved AUROC over matched random escalation by 0.0958 (95\% CI, 0.0755--0.1167) and Recall@5\%FPR by 0.2432 (CI, 0.1845--0.3027) over 45 category--seed units. This result shows that the allocation benefit persists when the normal memory bank is compressed, although the coreset is an image-level controlled approximation rather than a claim of exact reproduction of every PatchCore coreset implementation.
+
+\subsection{Patch-aggregation sensitivity}
+The local risk score aggregates the largest patch distances. On MVTec seed 17, using the largest 1\%, 5\% and 10\% of layer-2 patch distances produced AUROC differences of +0.0781, +0.0764 and +0.0830 over matched random routing, respectively, with corresponding Recall@5\%FPR differences of +0.1599, +0.1577 and +0.1648. The three settings were close, indicating that the mechanism is not dependent on a single aggregation fraction. We retain 5\% for the primary analysis because it was fixed before the exploratory MVTec comparison. On MPDD seed 17, the 5\% and 10\% differences were +0.1175 and +0.0823, respectively, showing why the MVTec post-hoc optimum should not be treated as a universal hyperparameter.
+
+\subsection{Budget sensitivity}
+On all 15 MVTec categories at seed 17, the AUROC difference between local-patch and matched random routing was +0.0560 at a 10\% budget, +0.0783 for the pooled three-seed 25\% analysis, and +0.1134 at a 50\% budget. Recall differences were +0.2965, +0.1848 and +0.1694, respectively. The 10\% and 50\% points are descriptive one-seed extensions; the 25\% point is the formal multi-seed result. Figure~\ref{fig:budget} visualises this trade-off.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/Fig3_budget_sensitivity.pdf}
+\caption{\textbf{Budget sensitivity of local-patch risk probing.} Differences from matched random escalation on MVTec AD. The 10\% and 50\% points use all 15 categories at seed 17; the 25\% point uses the three-seed pooled analysis and its bootstrap interval.}
+\label{fig:budget}
+\end{figure}
+
+\subsection{Latency boundary}
+In the strict MVTec latency audit, the local probe alone had P50/P95 latency of 2.384/3.127 ms, compared with 2.233/2.995 ms for the fast path and 3.479/4.714 ms for the full path. The sequential local-probe-plus-full route had P50/P95 latency of 2.981/7.135 ms at the measured 25\% selection protocol. The route therefore adds a small probe cost and can increase tail latency when the full path is invoked. A throughput-optimised implementation with feature sharing or asynchronous batching is required before making a deployment-latency claim.
+
+The deployment extension measured the same routes with batches of 8 and 32 on three MVTec categories. At batch 32, mean per-image latency was 0.077 ms for Fast, 1.051 ms for Full, 0.201 ms for the local probe and 0.266 ms for the 25\% mixed route; the corresponding within-category mean P95 values were 0.091, 1.293, 0.250 and 0.336 ms. Thus the method should be described as a throughput-oriented selective system: it does not improve single-sample P95, but it can reduce average and tail cost under batched scheduling. This batch result is an extension audit over three categories, not a replacement for the formal 45-unit accuracy analysis.
+
+To test whether the budget rule can be used without transductively ranking the complete test set, we added an online prefix controller. Images arrive in batches of 32; each batch uses only its current local-risk scores, and the number escalated is the increment required to maintain the cumulative 25\% quota. Across all 15 MVTec categories and three seeds (45 units), the realized fallback rate was 25.34\%. Relative to a matched random controller, the online route improved image-AUROC by 0.0331 (95\% bootstrap CI, 0.0045--0.0601) and Recall@5\%FPR by 0.0804 (CI, 0.0211--0.1346). The gain is smaller than the transductive global ranking, but it provides a more deployment-faithful fixed-budget comparison.
+An external deployment sanity check was deliberately retained rather than pooled into this claim. MPDD seed 17 (six categories) gave online-minus-random differences of +0.0890 AUROC and +0.0643 Recall@5\%FPR at a 25.47\% realized rate, whereas VisA seed 17 (12 categories) gave +0.00004 and $-0.0408$ at 25.02\%. The VisA result limits any claim of dataset-independent online routing and indicates sensitivity to batch composition and score shift.
+We further performed a predeclared buffer-size sensitivity on VisA by increasing the online buffer to 128 while keeping the model, budget and category--seed protocol fixed. Over 12 categories and three seeds, the AUROC difference was +0.00124 (95\% CI, $-0.00113$--0.00339) and the Recall@5\%FPR difference was +0.0750 (CI, 0.0189--0.1317), at a 25.02\% realized fallback rate. The larger buffer recovered low-FPR recall but not a significant AUROC gain; it is therefore a deployment sensitivity, not a universally optimal setting.
+
+\section{Discussion}
+The experiments support a specific systems conclusion: when the number of expensive local evaluations is fixed, a local-patch risk ranking allocates those evaluations more effectively than random selection. The result is robust across three industrial datasets and remains positive at low and high MVTec budgets. The strict quota design is important because the earlier global quantile route exhibited test fallback-rate drift; the present result does not rely on that drift.
+
+Several boundaries remain. The full detector is more accurate because it evaluates every image. The sequential route is not faster in P95 latency. The 10\% and 50\% budget extensions currently use one seed, and the external datasets have fewer categories than MVTec for the online deployment audit. The method also depends on the layer-2 local risk score being informative; purely local or distribution-shifted defects may be misrouted. A conformal calibration diagnostic improved over matched random selection, but its realized fallback rate drifted to 54.9\% for a nominal 25\% budget on MVTec seed 17, so it does not provide an online budget guarantee. The online prefix controller addresses budget accounting but not all possible score-distribution shifts. These limitations motivate future work on shared feature computation, stronger shift-aware calibration and protocol-aligned baselines.
+
+\section{Conclusion}
+We presented a strict-budget local-patch risk probe for selective industrial anomaly detection. At a fixed 25\% fallback budget, it improved AUROC and Recall@5\%FPR over matched random escalation across MVTec AD, MPDD and VisA. Budget sensitivity on MVTec confirmed positive selection gains at 10\%, 25\% and 50\%. The evidence supports a budget-allocation contribution, while explicitly excluding claims of full-detector superiority or sequential P95 acceleration.
+
+\section*{Data and code availability}
+MVTec AD, MPDD and VisA are publicly available datasets. The final submission package should include the split protocol, route seeds, unit-level JSON results, source data for the figures and the evaluation scripts. The authors will insert the public repository URL before submission.
+
+\section*{Declaration of competing interests}
+The authors declare no competing interests.
+
+\begin{thebibliography}{00}
+\bibitem{mvtec} Paul Bergmann, Michael Fauser, David Sattlegger, Carsten Steger, MVTec AD---A comprehensive real-world dataset for unsupervised anomaly detection, in: CVPR, 2019.
+\bibitem{patchcore} Karsten Roth, Lars Hickmann, Sebastian Schuler, et al., Towards total recall in industrial anomaly detection, in: CVPR, 2022.
+\bibitem{padim} Thomas Defard, Aleksandr Setkov, Angelique Loesch, Romaric Audigier, PaDiM: A patch distribution modeling framework for anomaly detection and localization, in: ICPR Workshops, 2021.
+\bibitem{selective} Yonatan Geifman, Ran El-Yaniv, Selective classification for deep neural networks, in: NeurIPS, 2017.
+\end{thebibliography}
+
+\end{document}

@@ -19,7 +19,7 @@ The manuscript bibliography is synchronized across `main.tex`, `references.bib`,
 
 ## Submission checks still requiring author confirmation
 
-1. Replace the repository placeholder with the final public repository URL and commit identifier.
+1. The public repository is https://github.com/cdhuangjin/fixed-budget-patch-routing (commit `5f5e027`).
 2. Confirm author names, affiliations, emails, funding statement, competing-interest statement, and contribution statement in the submission system.
 3. Upload editable `main.tex`, bibliography, class/style files, figure source files, and supplementary source as required by the journal portal.
 4. Upload the compiled PDF for local review only if the portal requests it; use the portal's source-file compilation workflow where applicable.

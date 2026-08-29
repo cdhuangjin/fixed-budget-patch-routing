@@ -20,7 +20,7 @@ This supplement provides details about the evaluation units, paired resampling, 
 Each evaluation unit pairs one dataset category with one random seed. The primary matched comparisons use 45 units for MVTec AD (15 categories $\times$ 3 seeds), 18 units for MPDD (6 $\times$ 3), and 36 units for VisA (12 $\times$ 3). Within each unit, local routing and matched-random selection use the same feature extractor, candidate patches, budget, seed, and downstream scoring rule. Reported effects are local-routing values minus matched-random values. Confidence intervals are percentile intervals from 10,000 paired bootstrap resamples of the evaluation units. The sign-count column gives the number of units with a positive effect.
 
 \begin{table}[ht]
-\caption{Primary paired effects (local-patch risk minus matched-random), canonical 25\% strong-routing result}
+\caption{Primary paired effects at the 25\% fallback budget}
 \label{tab:primary}
 \begin{tabularx}{\textwidth}{lrrrrrr}
 \toprule

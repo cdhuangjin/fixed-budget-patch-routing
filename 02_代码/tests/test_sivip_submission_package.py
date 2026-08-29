@@ -37,10 +37,10 @@ def test_sivip_readme_identifies_the_submission_release_branch():
     assert "immutable revision" in readme.lower()
 
 
-def test_sivip_manuscript_marks_unpublished_refactor_as_a_release_action():
+def test_sivip_manuscript_describes_the_public_code_release():
     manuscript = (SUBMISSION / "main.tex").read_text(encoding="utf-8")
-    assert "will be made available" in manuscript
-    assert "evaluation scripts, configuration files and route definitions are available" not in manuscript
+    assert "will be made available" not in manuscript
+    assert "evaluation scripts, configuration files and route definitions are available" in manuscript
 
 
 def test_sivip_package_does_not_describe_the_initial_release_as_its_revision():
@@ -103,6 +103,32 @@ def test_sivip_front_matter_and_supplement_are_self_explanatory():
     assert "Supplementary Information for" in supplement
     assert "Submitted to Signal, Image and Video Processing" not in supplement
     assert r"\email{614938561@qq.com\\ORCID" not in manuscript + supplement
+
+
+def test_sivip_conclusion_is_the_last_numbered_main_section():
+    manuscript = (SUBMISSION / "main.tex").read_text(encoding="utf-8")
+
+    assert r"\section{Methods}" not in manuscript
+    assert manuscript.index(r"\section{Experimental setup}") < manuscript.index(
+        r"\subsection{Implementation details}"
+    )
+    assert manuscript.index(r"\subsection{Ethics and reproducibility}") < manuscript.index(
+        r"\section{Results}"
+    )
+    assert manuscript.index(r"\section{Discussion}") < manuscript.index(
+        r"\section{Conclusion}"
+    ) < manuscript.index(r"\backmatter")
+
+
+def test_sivip_public_repository_language_matches_the_published_branch():
+    manuscript = (SUBMISSION / "main.tex").read_text(encoding="utf-8")
+    supplement = (SUBMISSION / "supplementary.tex").read_text(encoding="utf-8")
+
+    assert "submission-matched" not in manuscript
+    assert "are available in the project repository" in manuscript
+    assert "contains the evaluation protocol" in manuscript
+    assert r"\caption{Primary paired effects at the 25\% fallback budget}" in supplement
+    assert "canonical 25\\% strong-routing result" not in supplement
 
 
 def test_sivip_figures_do_not_embed_panel_titles_and_add_non_colour_cues():

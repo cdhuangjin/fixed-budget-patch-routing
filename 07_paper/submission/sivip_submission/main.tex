@@ -98,6 +98,18 @@ Image-level AUROC is the primary metric, with recall at a 5\% false-positive rat
 \subsection{Baselines and audits}
 Fast-only and Full-only paths provide lower- and upper-compute references. The PaDiM-style diagonal-Gaussian model uses the same layer-3 patch features. A patch-level farthest-point coreset follows the PatchCore reduction idea and provides a detector reference rather than a substitute for selective routing \cite{roth2022patchcore}. Additional checks cover failed routing variants, a conformal threshold, online prefix routing and CUDA latency.
 
+\subsection{Implementation details}
+All experiments use features from an ImageNet-pretrained ResNet-18. The fast path takes $128\times128$ inputs and layer-2 features, while the full path takes $224\times224$ inputs and layer-3 patch features. Memory banks contain features from normal training images only. The local probe uses the top 5\% aggregation fraction. Formal experiments use fixed seeds 5, 17 and 29. For each run, the evaluation code writes category, seed, budget, realized fallback rate, AUROC, Recall@5\%FPR and latency to JSON.
+
+\subsection{Latency measurement}
+CUDA latency measurements use explicit synchronization, one warm-up and repeated evaluation of cached images. We report mean and P95 latency for the Fast, Full and Risk (probe-plus-Full) paths. Repetitions measure a system property and are not independent units in the accuracy bootstrap.
+
+\subsection{Statistical analysis}
+For each dataset and budget, comparisons are paired at the category-seed level. The bootstrap samples these units with replacement and calculates the route difference for every replicate. We report two-sided 95\% confidence intervals. Interpretation considers whether the paired interval excludes zero as well as the direction and size of the difference. Positive category counts are descriptive.
+
+\subsection{Ethics and reproducibility}
+This study uses public image datasets and includes no human participants, animals or personally identifiable information. The reference list cites the dataset sources. The public project repository contains the evaluation protocol, figure source data, derived result tables and evaluation scripts.
+
 \section{Results}\label{sec:results}
 
 \subsection{Fixed-budget quality improvement across datasets}
@@ -172,20 +184,6 @@ Further work should test shared feature computation and an independently trained
 
 At an offline strict 25\% fallback quota, local-patch risk improves image-level AUROC over equal-count random selection and dispersion uncertainty on MVTec AD, MPDD and VisA. The MVTec advantage over random selection also persists at 10\% and 50\% budgets. Fast-score performs better on MPDD and VisA, so local-patch risk remains a dataset-dependent allocation policy rather than a generally superior one. Because every category-seed unit receives the same number of expensive evaluations, the comparison isolates the allocation rule from the fallback budget. These findings do not extend to full-detector accuracy, lower single-sample latency or universal online robustness.
 
-\section{Methods}\label{sec:methods}
-
-\subsection{Implementation details}
-All experiments use features from an ImageNet-pretrained ResNet-18. The fast path takes $128\times128$ inputs and layer-2 features, while the full path takes $224\times224$ inputs and layer-3 patch features. Memory banks contain features from normal training images only. The local probe uses the top 5\% aggregation fraction. Formal experiments use fixed seeds 5, 17 and 29. For each run, the evaluation code writes category, seed, budget, realized fallback rate, AUROC, Recall@5\%FPR and latency to JSON.
-
-\subsection{Latency measurement}
-CUDA latency measurements use explicit synchronization, one warm-up and repeated evaluation of cached images. We report mean and P95 latency for the Fast, Full and Risk (probe-plus-Full) paths. Repetitions measure a system property and are not independent units in the accuracy bootstrap.
-
-\subsection{Statistical analysis}
-For each dataset and budget, comparisons are paired at the category-seed level. The bootstrap samples these units with replacement and calculates the route difference for every replicate. We report two-sided 95\% confidence intervals. Interpretation considers whether the paired interval excludes zero as well as the direction and size of the difference. Positive category counts are descriptive.
-
-\subsection{Ethics and reproducibility}
-This study uses public image datasets and includes no human participants, animals or personally identifiable information. The reference list cites the dataset sources. The public project repository contains the analysis materials and will host the submission-matched split protocol, figure source data, derived result tables and evaluation scripts.
-
 \backmatter
 
 \section*{Acknowledgements}
@@ -202,7 +200,7 @@ The authors thank the MVTec AD, MPDD and VisA maintainers for providing the benc
 
 \textbf{Data availability.} MVTec AD is available from \url{https://www.mvtec.com/research-teaching/datasets/mvtec-ad}, MPDD from \url{https://github.com/stepanje/MPDD}, and VisA from the Registry of Open Data on AWS at \url{https://registry.opendata.aws/visa/}. The supplementary analyses and derived summary tables are included with the Supplementary Information, while category-seed result tables and figure source data are maintained in the project repository at \url{https://github.com/cdhuangjin/fixed-budget-patch-routing}.
 
-\textbf{Code availability.} The evaluation scripts, configuration files and route definitions will be made available in a submission-matched release at \url{https://github.com/cdhuangjin/fixed-budget-patch-routing}.
+\textbf{Code availability.} The evaluation scripts, configuration files and route definitions are available in the project repository at \url{https://github.com/cdhuangjin/fixed-budget-patch-routing}.
 
 \textbf{Author contributions.} J.H. designed the study, implemented the analysis, ran the experiments and drafted the manuscript. Q.G. reviewed the experiments and contributed to interpretation and revision. Both authors approved the final manuscript.
 

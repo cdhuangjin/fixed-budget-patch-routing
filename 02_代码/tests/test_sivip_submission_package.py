@@ -100,7 +100,8 @@ def test_sivip_front_matter_and_supplement_are_self_explanatory():
 
     assert "area under the receiver operating characteristic curve (AUROC)" in manuscript
     assert "95th-percentile (P95)" in manuscript
-    assert "Signal, Image and Video Processing" in supplement
+    assert "Supplementary Information for" in supplement
+    assert "Submitted to Signal, Image and Video Processing" not in supplement
     assert r"\email{614938561@qq.com\\ORCID" not in manuscript + supplement
 
 

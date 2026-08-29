@@ -5,8 +5,7 @@
 \usepackage{tabularx}
 \begin{document}
 
-\title[Supplementary Information]{Supplementary Information: Fixed-Budget Local-Patch Risk Routing for Industrial Anomaly Detection}
-\subtitle{Submitted to Signal, Image and Video Processing}
+\title[Supplementary Information]{Supplementary Information for\\[0.35em] Fixed-Budget Local-Patch Risk Routing for Industrial Anomaly Detection}
 \author*[1]{\fnm{Jin} \sur{Huang}}\email{614938561@qq.com; \href{https://orcid.org/0009-0005-7489-2018}{ORCID: 0009-0005-7489-2018}}
 \author[2]{\fnm{Qisen} \sur{Gao}}\email{1350728839@qq.com}
 \affil*[1]{\orgname{Guangxi Vocational Normal University}, \orgaddress{\city{Nanning}, \postcode{530007}, \state{Guangxi Zhuang Autonomous Region}, \country{China}}}
@@ -15,10 +14,10 @@
 \maketitle
 
 \section{Purpose and scope}
-This supplement records the unit definitions, paired resampling protocol, controlled baselines, failure cases, online-controller diagnostics, and latency measurement details supporting the main manuscript. All numerical values are from the strict matched-random evaluation unless explicitly labelled as an online or diagnostic result.
+This supplement provides details about the evaluation units, paired resampling, controlled baselines, failed variants, online routing, and latency measurements. Unless noted otherwise, the reported numbers come from the strict comparison with matched-random selection.
 
 \section{Evaluation units and uncertainty}
-An evaluation unit is one dataset category--random seed pair. The primary matched comparisons use 45 units for MVTec AD (15 categories $\times$ 3 seeds), 18 units for MPDD (6 $\times$ 3), and 36 units for VisA (12 $\times$ 3). For every unit, the local-routing score and the matched-random-selection score are computed with the same feature extractor, candidate patches, budget, seed, and downstream scoring rule. Reported effects are local minus matched-random values. Confidence intervals are percentile intervals from 10,000 paired bootstrap resamples of evaluation units. The sign-count column reports the number of units with a positive effect.
+Each evaluation unit pairs one dataset category with one random seed. The primary matched comparisons use 45 units for MVTec AD (15 categories $\times$ 3 seeds), 18 units for MPDD (6 $\times$ 3), and 36 units for VisA (12 $\times$ 3). Within each unit, local routing and matched-random selection use the same feature extractor, candidate patches, budget, seed, and downstream scoring rule. Reported effects are local-routing values minus matched-random values. Confidence intervals are percentile intervals from 10,000 paired bootstrap resamples of the evaluation units. The sign-count column gives the number of units with a positive effect.
 
 \begin{table}[ht]
 \caption{Primary paired effects (local-patch risk minus matched-random), canonical 25\% strong-routing result}
@@ -34,10 +33,10 @@ VisA & 36 & 0.0128 & [0.0081, 0.0171] & 28/36 & 0.2300 & [0.1336, 0.3214] \\
 \end{tabularx}
 \end{table}
 
-The same 99 category--seed rows give a combined AUROC difference of +0.0826 (95\% CI [0.0598, 0.1059]), a Recall@5\%FPR difference of +0.2958 ([0.2347, 0.3551]), and 77/99 units with a positive AUROC effect. Against the additional routing baselines, local-patch risk exceeds the nearest-patch-distance dispersion controller by +0.0704 AUROC ([0.0446, 0.0990]) but only matches the fast-score controller (+0.0017, 95\% CI [-0.0184, 0.0233]); on MPDD and VisA the fast-score controller is stronger.
+Pooling all 99 category and seed units gives an AUROC difference of +0.0826 (95\% CI [0.0598, 0.1059]) and a Recall@5\%FPR difference of +0.2958 ([0.2347, 0.3551]); 77 of the 99 units have a positive AUROC effect. Local-patch risk also exceeds the nearest-patch-distance dispersion controller by +0.0704 AUROC ([0.0446, 0.0990]). Its difference from the fast-score controller is +0.0017 (95\% CI [-0.0184, 0.0233]), and fast-score is stronger on MPDD and VisA.
 
 \section{Budget sensitivity}
-The MVTec budget sensitivity uses the same three-seed strict-quota protocol at 10\%, 25\% and 50\% fallback budgets, with 45 category--seed units per budget. Table~\ref{tab:budget} reports the paired AUROC and Recall@5\%FPR differences against the matched-random controller. The AUROC allocation benefit increases with budget, while the Recall benefit decreases; both remain strictly positive. These values describe allocation quality relative to matched-random routing and should not be interpreted as an end-to-end speedup.
+The MVTec budget analysis uses the same three seeds and strict quota at 10\%, 25\%, and 50\% fallback budgets, with 45 units at each budget. Table~\ref{tab:budget} reports paired AUROC and Recall@5\%FPR differences from matched-random selection. The AUROC difference increases with the budget, whereas the Recall difference decreases; both remain positive at all three budgets. These results describe allocation quality relative to matched-random routing, not an end-to-end speedup.
 
 \begin{table}[ht]
 \caption{MVTec budget sensitivity (local-patch risk minus matched-random) at 10\%, 25\% and 50\% fallback budgets}
@@ -54,18 +53,18 @@ Budget & $n$ & AUROC $\Delta$ & 95\% CI & Recall $\Delta$ & 95\% CI & $+$ units 
 \end{table}
 
 \section{Baseline and absolute-score context}
-On the 45 MVTec units, the full detector obtains AUROC 0.9392. At the primary 25\% local budget, the strict local route obtains AUROC 0.8343 and the matched-random route 0.7094. These absolute values are not presented as superiority over the full detector; they establish that the contribution is allocation quality at a fixed reduced local budget. A PaDiM-style baseline obtains AUROC 0.8982 and Recall@5\%FPR 0.6544. A controlled PatchCore-like patch-level farthest-point coreset detector obtains AUROC 0.9433 and Recall@5\%FPR 0.7847. The latter is an implementation-controlled approximation, not a claim of exact parity with the official PatchCore release.
+Across the 45 MVTec units, the full detector obtains AUROC 0.9392. At the primary 25\% local budget, the strict local route obtains 0.8343 and matched-random routing obtains 0.7094. These values place the routing result in context: the comparison concerns allocation under a reduced budget, not performance above the full detector. The PaDiM-style baseline obtains AUROC 0.8982 and Recall@5\%FPR 0.6544. The controlled PatchCore-like patch-level farthest-point coreset detector obtains AUROC 0.9433 and Recall@5\%FPR 0.7847. This implementation is a controlled approximation and is not intended to reproduce the official PatchCore release exactly.
 
 \section{Failure cases and boundary conditions}
-Three checks were retained as negative evidence. First, a multi-scale rank-fusion variant underperformed matched-random routing in a three-category smoke test, indicating that additional ranking signals can miscalibrate the budget allocation. Second, a lightweight cost filter underperformed the stronger patch-level coreset baseline. Third, the conformal-threshold diagnostic produced a realized fallback rate of 54.9\% for a nominal 25\% target and is therefore not used as a budget guarantee. These tests motivate the conservative claim that routing improves selection quality under a fixed experimental budget, not that every controller or every online policy is robust.
+We retained three negative checks. A multi-scale rank-fusion variant underperformed matched-random routing in a three-category smoke test, showing that extra ranking signals can misallocate the budget. A lightweight cost filter underperformed the stronger patch-level coreset baseline. The conformal-threshold diagnostic produced a 54.9\% fallback rate for a nominal 25\% target, so it cannot serve as a budget guarantee. These checks limit the claim to improved selection under the fixed experimental budget; they do not establish that every controller or online policy is robust.
 
 \section{Online-prefix sensitivity}
-The online prefix controller was evaluated separately because it introduces a temporal prefix and fallback policy. On the 45 MVTec units, realized fallback was 25.34\%, with AUROC effect 0.0331 (95\% CI [0.0045, 0.0601]) and Recall effect 0.0804 (95\% CI [0.0211, 0.1346]). The same controller produced AUROC/Recall effects of 0.0890/0.0643 on MPDD seed 17 and 0.00004/$-0.0408$ on VisA seed 17. With a VisA buffer of 128, the effects were 0.00124 (95\% CI [$-0.00113$, 0.00339]) and 0.0750 (95\% CI [0.0189, 0.1317]). These results are why online generalization is reported as configuration-sensitive rather than as a universal improvement.
+We evaluated the online prefix controller separately because its temporal prefix and fallback rule differ from the strict offline quota. Across the 45 MVTec units, the realized fallback rate was 25.34\%, with an AUROC effect of 0.0331 (95\% CI [0.0045, 0.0601]) and a Recall effect of 0.0804 (95\% CI [0.0211, 0.1346]). On seed 17, the AUROC/Recall effects were 0.0890/0.0643 for MPDD and 0.00004/$-0.0408$ for VisA. With a VisA buffer of 128, the effects were 0.00124 (95\% CI [$-0.00113$, 0.00339]) and 0.0750 (95\% CI [0.0189, 0.1317]). The outcome therefore depends on the controller configuration and does not show a universal online improvement.
 
 \section{Latency measurement}
-Latency was measured on the same machine with warm-up excluded from the reported percentile. Across 15 MVTec categories and 6,000 images with batch size one and CUDA synchronization, the Fast path had mean/P95 2.3292/2.9298 ms, the Full path 3.6269/4.0860 ms, and the Risk path (probe plus full) 5.1899/6.7302 ms. The Risk path includes both local and full operations and is a boundary diagnostic; it is not an end-to-end deployment benchmark. Batch throughput checks were limited to three categories and are treated as an extension rather than a primary claim.
+Latency was measured on the same machine, with the warm-up excluded from the reported percentile. Across 15 MVTec categories and 6,000 images at batch size one with CUDA synchronization, mean/P95 latency was 2.3292/2.9298 ms for Fast, 3.6269/4.0860 ms for Full, and 5.1899/6.7302 ms for Risk (probe plus Full). Risk includes both local and full operations, so this measurement defines a boundary rather than an end-to-end deployment benchmark. The batch-throughput checks cover only three categories and remain an extension to the main analysis.
 
 \section{Reproducibility record}
-The submission package records the random seeds, category lists, budget values, derived tables and figure source data. A submission-matched code release, including the environment specification and regeneration scripts, will be archived at \url{https://github.com/cdhuangjin/fixed-budget-patch-routing}. No private path is presented as a reproducibility link.
+The reproducibility materials record the random seeds, category lists, budget values, derived tables, and figure source data. Code, environment specifications, and regeneration scripts will be archived in the project repository at \url{https://github.com/cdhuangjin/fixed-budget-patch-routing}.
 
 \end{document}

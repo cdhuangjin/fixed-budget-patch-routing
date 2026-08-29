@@ -2,25 +2,29 @@
 import subprocess, sys, json, statistics
 from pathlib import Path
 
+CODE_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = CODE_ROOT.parent
 PYTHON = sys.executable
-SCRIPT = Path(r"C:\Users\PC\Documents\Codex\实验\06_主线项目/027_自适应稀疏注意力与准确率效率前沿\02_代码\evaluate_mvtec_patchcore.py")
-DATA = r"C:/Users/PC/Documents/Codex/实验/06_主线项目/027_自适应稀疏注意力与准确率效率前沿/04_数据与划分/MVTec AD"
-OUT = Path(r"C:\Users\PC\Documents\Codex\实验\06_主线项目\027_自适应稀疏注意力与准确率效率前沿\05_运行记录\一区候选_027_mvtec_multiseed_v2")
+SCRIPT = CODE_ROOT / "evaluate_mvtec_patchcore.py"
+DATA = PROJECT_ROOT / "04_数据与划分" / "MVTec AD"
+OUT = PROJECT_ROOT / "05_运行记录" / "localpatch_5seed_v3"
 OUT.mkdir(parents=True, exist_ok=True)
 
 CATEGORIES = ["bottle","cable","capsule","carpet","grid","hazelnut","leather",
               "metal_nut","pill","screw","tile","toothbrush","transistor","wood","zipper"]
-SEEDS = [5, 17, 29]
+SEEDS = [5, 17, 29, 41, 53]
 
 for seed in SEEDS:
     seed_dir = OUT / f"seed{seed}"
-    if seed_dir.exists() and list(seed_dir.glob("*.json")):
+    existing = list(seed_dir.glob("*.json")) if seed_dir.exists() else []
+    if len(existing) == len(CATEGORIES):
         n = len(list(seed_dir.glob("*.json")))
         print(f"SKIP seed={seed} (already has {n} files)")
         continue
     
-    cmd = [PYTHON, str(SCRIPT), "--data-root", DATA, "--categories"] + CATEGORIES + [
-           "--output-root", str(seed_dir), "--seed", str(seed), "--device", "cuda"]
+    cmd = [PYTHON, str(SCRIPT), "--data-root", str(DATA), "--categories"] + CATEGORIES + [
+           "--output-root", str(seed_dir), "--seed", str(seed), "--device", "cuda",
+           "--route-local", "--local-top-fraction", "0.05"]
     print(f"Running seed={seed}...", flush=True)
     result = subprocess.run(cmd, capture_output=True, text=True, cwd=str(SCRIPT.parent))
     if result.returncode != 0:

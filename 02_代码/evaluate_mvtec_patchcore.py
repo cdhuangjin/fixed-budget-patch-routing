@@ -29,6 +29,7 @@ from selective_routes import (
     risk_route,
     score_matched_route,
     quota_route,
+    patch_memory_dispersion_scores,
     online_prefix_quota_route,
     threshold_for_budget,
     conformal_threshold,
@@ -230,6 +231,7 @@ def run_category(index, category, args, model, transform):
     fast_val, _, _ = collect_features(model, validation_records, args.fast_size, transform, args.batch_size, args.device)
     fast_test, y_test, _ = collect_features(model, test, args.fast_size, transform, args.batch_size, args.device)
     local_val_scores = local_test_scores = None
+    local_bank = None
     local_ms = 0.0
     if bool(getattr(args, "route_local", False)):
         local_fit, _, local_ms = collect_local_features(model, fit_records, args.fast_size, transform, args.batch_size, args.device)
@@ -360,6 +362,24 @@ def run_category(index, category, args, model, transform):
     combined_random = np.where(random_mask, full_test_scores, fast_test_scores)
     combined_score = np.where(score_decision.mask, full_test_scores, fast_test_scores)
     combined_quota = np.where(quota_decision.mask, full_test_scores, fast_test_scores)
+    fast_score_decision = score_matched_route(
+        fast_test_scores, quota_decision.actual_fallback_count, route_name="fast_score"
+    )
+    if local_test_scores is None or local_bank is None:
+        raise ValueError("the matched uncertainty baseline requires local route features")
+    uncertainty_test_scores = patch_memory_dispersion_scores(
+        local_test, local_bank, device=args.device
+    ).cpu().numpy()
+    uncertainty_decision = score_matched_route(
+        uncertainty_test_scores, quota_decision.actual_fallback_count,
+        route_name="uncertainty_dispersion"
+    )
+    combined_fast_score = np.where(
+        fast_score_decision.mask, full_test_scores, fast_test_scores
+    )
+    combined_uncertainty = np.where(
+        uncertainty_decision.mask, full_test_scores, fast_test_scores
+    )
     combined_quota_random = np.where(
         quota_random_decision.mask, full_test_scores, fast_test_scores
     )
@@ -402,6 +422,12 @@ def run_category(index, category, args, model, transform):
         "score_matched_upper": evaluate_mode(
             y_test, combined_score, score_decision.actual_rate, fast_ms, full_ms
         ),
+        "fast_score": evaluate_mode(
+            y_test, combined_fast_score, fast_score_decision.actual_rate, fast_ms, full_ms
+        ),
+        "uncertainty_dispersion": evaluate_mode(
+            y_test, combined_uncertainty, uncertainty_decision.actual_rate, fast_ms, full_ms
+        ),
         "strict_quota": evaluate_mode(
             y_test, combined_quota, quota_decision.actual_rate, fast_ms, full_ms
         ),
@@ -435,6 +461,8 @@ def run_category(index, category, args, model, transform):
             "risk": risk_decision.as_dict(),
             "random": random_decision.as_dict(),
             "score_matched": score_decision.as_dict(),
+            "fast_score": fast_score_decision.as_dict(),
+            "uncertainty_dispersion": uncertainty_decision.as_dict(),
             "strict_quota": quota_decision.as_dict(),
             "strict_quota_random": quota_random_decision.as_dict(),
             "online_prefix_quota": online_decision.as_dict(),

@@ -3,6 +3,7 @@ import unittest
 from pathlib import Path
 
 import numpy as np
+import torch
 
 sys.path.insert(0, str(Path(__file__).parents[1]))
 
@@ -16,6 +17,8 @@ from selective_routes import (
     threshold_for_budget,
     conformal_threshold,
     strict_quota_combined_scores,
+    patch_memory_scores,
+    patch_memory_dispersion_scores,
 )
 
 
@@ -35,6 +38,31 @@ class SelectiveRouteTests(unittest.TestCase):
     def test_score_route_matches_exact_count_and_is_stable_on_ties(self):
         decision = score_matched_route([0.5, 0.9, 0.9, 0.1], 2)
         np.testing.assert_array_equal(decision.mask, [False, True, True, False])
+
+    def test_fast_and_uncertainty_routes_use_one_exact_fallback_count(self):
+        fast_scores = np.asarray([0.1, 0.9, 0.2, 0.8])
+        uncertainty_scores = np.asarray([0.4, 0.2, 0.9, 0.8])
+        quota = quota_route(fast_scores, fallback_budget=0.5)
+        fast_decision = score_matched_route(
+            fast_scores, quota.actual_fallback_count, route_name="fast_score"
+        )
+        uncertainty_decision = score_matched_route(
+            uncertainty_scores, quota.actual_fallback_count,
+            route_name="uncertainty_dispersion"
+        )
+        self.assertEqual(quota.actual_fallback_count, 2)
+        self.assertEqual(fast_decision.actual_fallback_count, 2)
+        self.assertEqual(uncertainty_decision.actual_fallback_count, 2)
+
+    def test_patch_memory_dispersion_scores_rank_distance_spread(self):
+        query = torch.tensor([
+            [[0.0, 0.0], [0.1, 0.0]],
+            [[0.0, 0.0], [1.0, 1.0]],
+        ])
+        bank = torch.tensor([[0.0, 0.0], [1.0, 0.0]])
+        scores = patch_memory_dispersion_scores(query, bank)
+        self.assertEqual(scores.shape, (2,))
+        self.assertGreater(float(scores[1]), float(scores[0]))
 
     def test_oracle_is_explicitly_upper_bound(self):
         decision = oracle_matched_route([0, 1, 0, 1], 2)
@@ -71,6 +99,16 @@ class SelectiveRouteTests(unittest.TestCase):
     def test_invalid_count_is_rejected(self):
         with self.assertRaises(ValueError):
             random_matched_route(3, 4)
+
+    def test_patch_memory_scores_rank_images_by_nearest_patch_distance(self):
+        query = torch.tensor([
+            [[0.0, 0.0], [1.0, 1.0]],
+            [[0.0, 0.0], [0.1, 0.1]],
+        ])
+        bank = torch.tensor([[0.0, 0.0], [1.0, 0.0]])
+        scores = patch_memory_scores(query, bank, top_fraction=0.5)
+        self.assertEqual(scores.shape, (2,))
+        self.assertGreater(float(scores[0]), float(scores[1]))
 
 
 if __name__ == "__main__":

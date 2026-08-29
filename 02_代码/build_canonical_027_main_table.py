@@ -56,19 +56,32 @@ def collect_mvtec(mvtec_root: Path, *, route: str = "risk_fallback") -> list[dic
             data = read_json(path)
             route_metrics = data[route]
             random_metrics = data[random_route]
-            rows.append({
+            row = {
                 "dataset": "MVTec",
                 "category": data["category"],
                 "seed": seed,
                 "fallback_budget": data["fallback_budget"],
-                "fast_only_auroc": data["full_only"]["image_auroc"],
+                "fast_only_auroc": data["fast_only"]["image_auroc"],
+                "full_only_auroc": data["full_only"]["image_auroc"],
                 "risk_auroc": route_metrics["image_auroc"],
                 "random_auroc": random_metrics["image_auroc"],
                 "risk_delta": route_metrics["image_auroc"] - random_metrics["image_auroc"],
                 "fallback_rate": route_metrics["fallback_rate"],
-                "fast_mean_ms": mean_latency_ms(data["full_only"]),
+                "fast_mean_ms": mean_latency_ms(data["fast_only"]),
+                "full_mean_ms": mean_latency_ms(data["full_only"]),
                 "risk_mean_ms": mean_latency_ms(route_metrics),
-            })
+            }
+            routing = data.get("routing", {})
+            risk_route = routing.get(route)
+            random_route_record = routing.get(random_route)
+            if risk_route is not None and random_route_record is not None:
+                row.update({
+                    "risk_count": int(risk_route["actual_fallback_count"]),
+                    "random_count": int(random_route_record["actual_fallback_count"]),
+                    "total": int(data["n_test"]),
+                    "route_source": risk_route.get("route_source", ""),
+                })
+            rows.append(row)
     return rows
 
 

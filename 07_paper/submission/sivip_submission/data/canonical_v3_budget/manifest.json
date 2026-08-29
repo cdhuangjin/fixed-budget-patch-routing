@@ -1,0 +1,28 @@
+{
+  "schema_version": "budget_sensitivity_materialized_v1",
+  "source": "../upstream/strong_routing_budget_canonical_v1.json",
+  "source_sha256": "0a5f9c9d95e1b0717cb23a3656514479fc1cc8014c71033910836f20924069f3",
+  "source_bytes": 117810,
+  "row_count": 135,
+  "protocol": {
+    "fallback_budgets": [
+      0.1,
+      0.25,
+      0.5
+    ],
+    "seeds": [
+      5,
+      17,
+      29
+    ],
+    "budget_count_rule": "ceil(n_test * budget)",
+    "risk_route": "local patch top-5% mean distance, label-free global exact quota",
+    "random_control": "seeded uniform sampling, exact quota matched to Risk",
+    "bootstrap": "paired category-seed bootstrap, 10000 resamples, seed 17"
+  },
+  "audit_summary": {
+    "pass": 4,
+    "warn": 0,
+    "fail": 0
+  }
+}

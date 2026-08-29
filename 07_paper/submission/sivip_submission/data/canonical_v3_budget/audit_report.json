@@ -1,0 +1,29 @@
+{
+  "summary": {
+    "pass": 4,
+    "warn": 0,
+    "fail": 0
+  },
+  "checks": [
+    {
+      "name": "budget_row_counts",
+      "status": "PASS",
+      "detail": "observed={'0.10': 45, '0.25': 45, '0.50': 45}, expected={'0.10': 45, '0.25': 45, '0.50': 45}"
+    },
+    {
+      "name": "matched_exact_quota",
+      "status": "PASS",
+      "detail": "all rows enforce ceil(n * budget)"
+    },
+    {
+      "name": "budget_baseline_arithmetic",
+      "status": "PASS",
+      "detail": "all deltas equal Risk minus route baseline"
+    },
+    {
+      "name": "seed_layout",
+      "status": "PASS",
+      "detail": "each budget has seeds [5, 17, 29]"
+    }
+  ]
+}

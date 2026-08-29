@@ -62,6 +62,14 @@ def main() -> None:
     args = parser.parse_args()
 
     rows = collect_mvtec(Path(args.mvtec_dir), route="strict_quota")
+    for row in rows:
+        required = ("risk_count", "random_count", "total", "route_source")
+        if any(key not in row for key in required):
+            raise ValueError("MVTec strict-quota source lacks routing provenance")
+        if row["risk_count"] != row["random_count"]:
+            raise ValueError("MVTec strict-quota source has unmatched fallback counts")
+        if abs(row["fallback_rate"] - row["risk_count"] / row["total"]) > 1e-12:
+            raise ValueError("MVTec strict-quota source has inconsistent fallback rate")
     rows.extend(collect_external_strict_quota(Path(args.external_dir)))
     canonical = {
         "status": "canonical_strict_quota_main_table",

@@ -28,6 +28,7 @@ def main() -> None:
     parser.add_argument("--output-root", type=Path, required=True)
     parser.add_argument("--device", default="cuda")
     parser.add_argument("--fallback-budget", type=float, default=0.25)
+    parser.add_argument("--route-local", action="store_true")
     args = parser.parse_args()
     code_root = Path(__file__).parent
     jobs = [
@@ -52,6 +53,8 @@ def main() -> None:
             ]
             if dataset == "mpdd":
                 command.extend(["--batch-size", "16"])
+            if args.route_local:
+                command.append("--route-local")
             started = time.perf_counter()
             completed = subprocess.run(command, cwd=code_root, capture_output=True, text=True)
             elapsed = time.perf_counter() - started

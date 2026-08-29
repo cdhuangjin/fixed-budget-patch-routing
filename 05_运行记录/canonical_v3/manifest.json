@@ -1,0 +1,20 @@
+{
+  "schema_version": "strong_routing_materialized_v1",
+  "source": "..\\05_运行记录\\formal_v3\\strong_routing_canonical_v1.json",
+  "source_sha256": "18b337ab707dd94c792fd74721f168b637dde09e0889313db9574fa66002a3a4",
+  "source_bytes": 118562,
+  "row_count": 99,
+  "protocol": {
+    "fallback_budget": 0.25,
+    "fallback_count_rule": "ceil(n_test * budget)",
+    "risk_route": "local patch top-5% mean distance, label-free global exact quota",
+    "fast_score_route": "Fast global anomaly score, exact quota matched to Risk",
+    "uncertainty_route": "nearest patch-distance Q90-Q50, exact quota matched to Risk",
+    "random_control": "seeded uniform sampling, exact quota matched to Risk"
+  },
+  "audit_summary": {
+    "pass": 4,
+    "warn": 0,
+    "fail": 0
+  }
+}

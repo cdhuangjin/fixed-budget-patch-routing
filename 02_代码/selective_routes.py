@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
+import torch
 
 
 @dataclass(frozen=True)
@@ -139,6 +140,49 @@ def strict_quota_combined_scores(scores, fallback_budget: float, seed: int, boos
         risk,
         control,
     )
+
+
+def patch_memory_scores(features, bank, top_fraction: float = 0.05, device=None) -> torch.Tensor:
+    """Score each image by its largest patch-to-normal-memory distances."""
+    query = torch.stack(list(features)) if isinstance(features, list) else torch.as_tensor(features)
+    memory = torch.as_tensor(bank)
+    if query.ndim != 3 or memory.ndim != 2 or query.shape[-1] != memory.shape[-1]:
+        raise ValueError("features must be [images, patches, dims] and bank must be [patches, dims]")
+    if query.shape[0] == 0 or memory.shape[0] == 0:
+        raise ValueError("features and bank must not be empty")
+    fraction = float(top_fraction)
+    if not 0.0 < fraction <= 1.0:
+        raise ValueError("top_fraction must be in (0, 1]")
+    target = torch.device(device) if device is not None else memory.device
+    query = query.to(target)
+    memory = memory.to(target)
+    scores = []
+    for image in query:
+        nearest_patch_distance = torch.cdist(image, memory).min(dim=1).values
+        count = max(1, int(round(nearest_patch_distance.numel() * fraction)))
+        scores.append(torch.topk(nearest_patch_distance, k=count).values.mean())
+    return torch.stack(scores)
+
+
+def patch_memory_dispersion_scores(features, bank, device=None) -> torch.Tensor:
+    """Score each image by spread of its nearest patch-to-memory distances."""
+    query = torch.stack(list(features)) if isinstance(features, list) else torch.as_tensor(features)
+    memory = torch.as_tensor(bank)
+    if query.ndim != 3 or memory.ndim != 2 or query.shape[-1] != memory.shape[-1]:
+        raise ValueError("features must be [images, patches, dims] and bank must be [patches, dims]")
+    if query.shape[0] == 0 or memory.shape[0] == 0:
+        raise ValueError("features and bank must not be empty")
+    target = torch.device(device) if device is not None else memory.device
+    query = query.to(target)
+    memory = memory.to(target)
+    scores = []
+    for image in query:
+        nearest_patch_distance = torch.cdist(image, memory).min(dim=1).values
+        scores.append(torch.quantile(nearest_patch_distance, 0.90) - torch.quantile(nearest_patch_distance, 0.50))
+    scores_tensor = torch.stack(scores)
+    if not torch.isfinite(scores_tensor).all():
+        raise ValueError("dispersion scores must be finite")
+    return scores_tensor
 
 
 def online_prefix_quota_route(

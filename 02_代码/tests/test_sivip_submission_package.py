@@ -127,6 +127,8 @@ def test_sivip_public_repository_language_matches_the_published_branch():
     assert "submission-matched" not in manuscript
     assert "are available in the project repository" in manuscript
     assert "contains the evaluation protocol" in manuscript
+    assert "will be archived" not in supplement
+    assert "are available in the project repository" in supplement
     assert r"\caption{Primary paired effects at the 25\% fallback budget}" in supplement
     assert "canonical 25\\% strong-routing result" not in supplement
 

@@ -65,6 +65,6 @@ We evaluated the online prefix controller separately because its temporal prefix
 Latency was measured on the same machine, with the warm-up excluded from the reported percentile. Across 15 MVTec categories and 6,000 images at batch size one with CUDA synchronization, mean/P95 latency was 2.3292/2.9298 ms for Fast, 3.6269/4.0860 ms for Full, and 5.1899/6.7302 ms for Risk (probe plus Full). Risk includes both local and full operations, so this measurement defines a boundary rather than an end-to-end deployment benchmark. The batch-throughput checks cover only three categories and remain an extension to the main analysis.
 
 \section{Reproducibility record}
-The reproducibility materials record the random seeds, category lists, budget values, derived tables, and figure source data. Code, environment specifications, and regeneration scripts will be archived in the project repository at \url{https://github.com/cdhuangjin/fixed-budget-patch-routing}.
+The reproducibility materials record the random seeds, category lists, budget values, derived tables, and figure source data. Code, environment specifications, and regeneration scripts are available in the project repository at \url{https://github.com/cdhuangjin/fixed-budget-patch-routing}.
 
 \end{document}

@@ -123,12 +123,16 @@ def test_sivip_conclusion_is_the_last_numbered_main_section():
 def test_sivip_public_repository_language_matches_the_published_branch():
     manuscript = (SUBMISSION / "main.tex").read_text(encoding="utf-8")
     supplement = (SUBMISSION / "supplementary.tex").read_text(encoding="utf-8")
+    cover_letter = (SUBMISSION / "cover_letter.tex").read_text(encoding="utf-8")
 
     assert "submission-matched" not in manuscript
     assert "are available in the project repository" in manuscript
     assert "contains the evaluation protocol" in manuscript
     assert "will be archived" not in supplement
     assert "are available in the project repository" in supplement
+    assert "will be made available" not in cover_letter
+    assert "when the SIViP submission revision is publicly released" not in cover_letter
+    assert "source code and reproducibility materials are available" in cover_letter
     assert r"\caption{Primary paired effects at the 25\% fallback budget}" in supplement
     assert "canonical 25\\% strong-routing result" not in supplement
 

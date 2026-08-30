@@ -130,6 +130,7 @@ def test_sivip_public_repository_language_matches_the_published_branch():
     assert "contains the evaluation protocol" in manuscript
     assert "will be archived" not in supplement
     assert "are available in the project repository" in supplement
+    assert "Journal: Signal, Image and Video Processing" in supplement
     assert "will be made available" not in cover_letter
     assert "when the SIViP submission revision is publicly released" not in cover_letter
     assert "source code and reproducibility materials are available" in cover_letter

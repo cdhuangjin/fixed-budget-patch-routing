@@ -1,0 +1,36 @@
+project: adaptive_sparse_attention_027
+stage: protocol_v2_literature_locked
+seed: [5, 17, 29, 41, 53]
+model:
+  name: deit_tiny
+  pretrained: true
+  image_size: 224
+  patch_size: 16
+  hidden_dim: 192
+  layers: 12
+  heads: 3
+  attention: adaptive_sparse
+data:
+  train: imagenet100
+  smoke: cifar100
+  stress: cifar100c
+  external: imagenet1k_heldout100
+  split: {train: 0.80, validation: 0.10, test: 0.10}
+  difficulty_bins: [easy, medium, hard]
+  severities: [1, 3, 5]
+sparsity:
+  keep_ratio: [0.2, 0.4, 0.6, 0.8]
+  k_min: 16
+  k_max: 196
+  gate_components: [difficulty, uncertainty]
+  threshold_source: validation_only
+baselines: [full, fixed_sparse, random_sparse, difficulty_only, uncertainty_only, rata]
+ablations: [-difficulty, -uncertainty, random_gate, fixed_policy, global_score, cross_model]
+metrics:
+  primary: [accuracy_at_p95_latency, worst_10pct_accuracy_at_p95_latency]
+  secondary: [accuracy, worst_10pct_accuracy, token_keep_ratio, latency_p50, latency_p95, peak_memory, throughput, energy_proxy, ece]
+evaluation:
+  bootstrap_reps: 10000
+  confidence_level: 0.95
+  test_labels_for_tuning: false
+  report_failure_cases: true

@@ -1,0 +1,44 @@
+# Local environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.pytest_tmp*/
+**/*_tmp/
+**/tmp/
+
+# Private/local datasets and run artifacts
+04_数据与划分/
+05_运行记录/
+**/checkpoints/
+**/runs/
+**/wandb/
+*.pt
+*.pth
+*.ckpt
+*.onnx
+
+# Local LaTeX build products and temporary ZIP checks
+**/build/
+**/zip_compile_check*/
+**/upload_stage*/
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+*.zip
+**/*.collision.json
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

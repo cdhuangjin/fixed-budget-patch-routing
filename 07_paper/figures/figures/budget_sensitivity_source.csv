@@ -1,0 +1,4 @@
+budget,auroc_delta,auroc_ci_low,auroc_ci_high,recall_delta,recall_ci_low,recall_ci_high,auroc_positive,recall_positive,seeds,n_categories
+0.10,0.1145,0.0821,0.1484,0.4981,0.3940,0.5977,39,42,3,45
+0.25,0.1249,0.0837,0.1659,0.3877,0.2916,0.4792,33,42,3,45
+0.50,0.1589,0.1226,0.1954,0.2479,0.1834,0.3110,39,35,3,45

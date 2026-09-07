@@ -1,0 +1,30 @@
+{
+  "method": "average paired AUROC deltas over seeds within category, then bootstrap category means",
+  "bootstrap_replicates": 10000,
+  "bootstrap_seed": 17,
+  "datasets": {
+    "MVTec": {
+      "n_categories": 15,
+      "risk_minus_random": {"mean": 0.12488992094671914, "low": 0.05998813067809634, "high": 0.19167474713135868},
+      "risk_minus_fast_score": {"mean": 0.042510773027135663, "low": -0.02164481408518419, "high": 0.11280731154337403},
+      "risk_minus_uncertainty": {"mean": 0.07461424467173638, "low": 0.023656723221816018, "high": 0.12566585465365715}
+    },
+    "MPDD": {
+      "n_categories": 6,
+      "risk_minus_random": {"mean": 0.11658853673633995, "low": 0.04928364755771297, "high": 0.18745885978325513},
+      "risk_minus_fast_score": {"mean": -0.06328931653084659, "low": -0.10387972872667284, "high": -0.021550198004576433},
+      "risk_minus_uncertainty": {"mean": 0.18805625490257083, "low": 0.03423779304489326, "high": 0.39290811363037054}
+    },
+    "VisA": {
+      "n_categories": 12,
+      "risk_minus_random": {"mean": 0.012772974511986048, "low": 0.004961748707244466, "high": 0.02006534909150734},
+      "risk_minus_fast_score": {"mean": -0.016868180773178847, "low": -0.024652787825228215, "high": -0.009340115812974762},
+      "risk_minus_uncertainty": {"mean": 0.006349257858010635, "low": -0.0009204820172424011, "high": 0.01343256915716415}
+    }
+  },
+  "combined_33_categories": {
+    "risk_minus_random": {"mean": 0.08261077965947453, "low": 0.04565442513954452, "high": 0.12167468081897488},
+    "risk_minus_fast_score": {"mean": 0.001682046271024527, "low": -0.031063568116936634, "high": 0.03918292358103368},
+    "risk_minus_uncertainty": {"mean": 0.07041643314507874, "low": 0.02815297468190772, "high": 0.1224982801593679}
+  }
+}

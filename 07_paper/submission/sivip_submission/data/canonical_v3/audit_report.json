@@ -1,0 +1,29 @@
+{
+  "summary": {
+    "pass": 4,
+    "warn": 0,
+    "fail": 0
+  },
+  "checks": [
+    {
+      "name": "expected_row_count",
+      "status": "PASS",
+      "detail": "observed=99, expected=99"
+    },
+    {
+      "name": "matched_exact_quota",
+      "status": "PASS",
+      "detail": "all rows enforce ceil(n * budget)"
+    },
+    {
+      "name": "strong_baseline_arithmetic",
+      "status": "PASS",
+      "detail": "all deltas equal Risk minus route baseline"
+    },
+    {
+      "name": "dataset_layout",
+      "status": "PASS",
+      "detail": "{'MVTec': 45, 'MPDD': 18, 'VisA': 36}"
+    }
+  ]
+}

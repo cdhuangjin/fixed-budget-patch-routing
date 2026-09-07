@@ -1,0 +1,13 @@
+dataset,n_units,method,auroc,recall_at_fpr,mean_ms_estimated,auroc_ci_low,auroc_ci_high
+MVTec AD,45,Fast only,0.7860,0.4575,,,
+MVTec AD,45,Random matched fallback,0.7796,0.6204,,,
+MVTec AD,45,Risk fallback,0.8674,0.7251,,,
+MVTec AD,45,Full only,0.9390,0.7852,,,
+VisA,36,Fast only,0.962684,0.722222,9.284020,0.955814,0.969117
+VisA,36,Random matched fallback,0.949003,0.652222,10.712092,0.943939,0.953758
+VisA,36,Risk fallback,0.965598,0.726389,10.712092,0.958206,0.972521
+VisA,36,Full only,0.969376,0.776111,19.952031,0.959964,0.977883
+MPDD,18,Fast only,0.853387,0.639103,53.668792,0.782106,0.917524
+MPDD,18,Random matched fallback,0.731646,0.487908,87.590017,0.692248,0.770468
+MPDD,18,Risk fallback,0.883683,0.639904,87.590017,0.836953,0.925890
+MPDD,18,Full only,0.884260,0.628846,102.004168,0.846182,0.923158
